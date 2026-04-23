@@ -37,25 +37,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   final GlobalKey _projectsKey = GlobalKey();
   final GlobalKey _contactKey = GlobalKey();
 
-  String _activeSection = "Inicio";
-
-  // Radios de órbita X individuales para cada sección (para ajustar el ancho de la elipse)
-  final Map<String, double> _navRadiiX = {
-    "Inicio": 35.0,
-    "Sobre Mí": 45.0,
-    "Skills": 35.0,
-    "Proyectos": 50.0,
-    "Contacto": 45.0,
-  };
-
-  // Radios de órbita Y individuales para cada sección (para ajustar el alto de la elipse)
-  final Map<String, double> _navRadiiY = {
-    "Inicio": 15.0,
-    "Sobre Mí": 15.0,
-    "Skills": 15.0,
-    "Proyectos": 15.0,
-    "Contacto": 15.0,
-  };
+  final ValueNotifier<String> _activeSectionNotifier = ValueNotifier<String>("Inicio");
 
   void _scrollToSection(GlobalKey key) {
     if (key.currentContext != null) {
@@ -63,7 +45,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
         key.currentContext!,
         duration: const Duration(milliseconds: 800),
         curve: Curves.easeInOutCubic,
-        alignment: 0.5, // Centra la sección en pantalla
+        alignment: 0.5,
       );
     }
   }
@@ -77,7 +59,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
       "Contacto": _contactKey,
     };
 
-    String detected = _activeSection;
+    String detected = _activeSectionNotifier.value;
     double minDistance = double.infinity;
 
     keys.forEach((title, key) {
@@ -85,7 +67,6 @@ class _PortfolioScreenState extends State<PortfolioScreen>
       if (context != null) {
         final box = context.findRenderObject() as RenderBox;
         final position = box.localToGlobal(Offset.zero).dy;
-        // Buscamos la sección que esté más cerca de la parte superior (umbral 200)
         if (position.abs() < minDistance) {
           minDistance = position.abs();
           detected = title;
@@ -93,10 +74,8 @@ class _PortfolioScreenState extends State<PortfolioScreen>
       }
     });
 
-    if (detected != _activeSection) {
-      setState(() {
-        _activeSection = detected;
-      });
+    if (detected != _activeSectionNotifier.value) {
+      _activeSectionNotifier.value = detected;
     }
   }
 
@@ -123,10 +102,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
       value: 1.0,
     );
 
-    _scrollController.addListener(() {
-      _onScroll();
-      setState(() {});
-    });
+    _scrollController.addListener(_onScroll);
   }
 
   @override
@@ -161,44 +137,58 @@ class _PortfolioScreenState extends State<PortfolioScreen>
       }
     }
     _planetRingsPicture = ringsRecorder.endRecording();
+    _bakePathCache.clear(); // Limpiar cache tras el horneado
   }
 
   void _drawFidelityParticle(Canvas canvas, StarParticle p, Paint paint) {
     if (p.planetRadius == null || p.planetAngle == null) return;
+    if (p.baseOpacity < 0.1) return; // Saltar estrellas casi invisibles en el bake
     
-    // Posición relativa al centro (0,0) antes de la rotación orbital
     final pos = Offset(
       p.planetRadius! * cos(p.planetAngle!),
       p.planetRadius! * sin(p.planetAngle!),
     );
 
-    // Glow (exactamente como en tu pintor)
-    if (p.hasGlow && p.size > 1.5) {
+    // Glow ultra-optimizado para el bake
+    if (p.hasGlow && p.size > 3.0) {
       final glowPaint = Paint()
         ..style = PaintingStyle.fill
-        ..color = p.particleColor.withOpacity(p.baseOpacity * 0.4)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, p.size * 0.8);
-      canvas.drawCircle(pos, p.size * 1.5, glowPaint);
+        ..color = p.particleColor.withOpacity(p.baseOpacity * 0.3)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
+      canvas.drawCircle(pos, p.size * 1.2, glowPaint);
     }
 
     paint.color = AppColors.starCore.withOpacity(p.baseOpacity);
     
-    if (p.size > 2.5) {
+    if (p.size > 3.0) {
       canvas.save();
       canvas.translate(pos.dx, pos.dy);
       canvas.rotate(p.rotationAngle);
       
-      Path starPath;
-      switch (p.starType) {
-        case 0: starPath = _createStarPath(5, p.size, p.size * 0.4); break;
-        case 1: starPath = _createStarPath(4, p.size * 1.2, p.size * 0.2); break;
-        default: starPath = _createStarPath(8, p.size * 0.9, p.size * 0.5); break;
-      }
+      // Usamos el mismo generador de paths (que ahora tiene cache en el pintor)
+      // O podemos implementar una versión simple aquí para el bake inicial
+      Path starPath = _getStarPath(p.starType, p.size);
       canvas.drawPath(starPath, paint);
       canvas.restore();
     } else {
       canvas.drawCircle(pos, p.size * 0.5, paint);
     }
+  }
+
+  // Cache temporal para el proceso de baking
+  final Map<int, Path> _bakePathCache = {};
+
+  Path _getStarPath(int type, double size) {
+    int cacheKey = type * 1000 + (size * 10).toInt();
+    if (_bakePathCache.containsKey(cacheKey)) return _bakePathCache[cacheKey]!;
+    
+    Path path = _createStarPath(
+      type == 0 ? 5 : (type == 1 ? 4 : 8),
+      type == 1 ? size * 1.2 : (type == 0 ? size : size * 0.9),
+      type == 1 ? size * 0.2 : (type == 0 ? size * 0.4 : size * 0.5),
+    );
+    _bakePathCache[cacheKey] = path;
+    return path;
   }
 
   Path _createStarPath(int points, double outerRadius, double innerRadius) {
@@ -286,7 +276,9 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   void dispose() {
     _tickerController.dispose();
     _formationController.dispose();
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _activeSectionNotifier.dispose();
     _planetBodyPicture?.dispose();
     _planetRingsPicture?.dispose();
     super.dispose();
@@ -315,14 +307,19 @@ class _PortfolioScreenState extends State<PortfolioScreen>
           Positioned.fill(
             child: RepaintBoundary(
               child: AnimatedBuilder(
-                animation: _tickerController,
+                animation: Listenable.merge([_tickerController, _scrollController]),
                 builder: (context, _) {
+                  final phaseController = ScrollPhaseController(
+                    scrollOffset: _scrollController.hasClients ? _scrollController.offset : 0.0,
+                    maxScrollExtent: _scrollController.hasClients && _scrollController.position.hasContentDimensions 
+                        ? _scrollController.position.maxScrollExtent 
+                        : 3000.0,
+                  );
                   return CustomPaint(
                     painter: StarFieldPainter(
                       particles: _particles,
                       phaseController: phaseController,
-                      timeSeconds:
-                          _timeSeconds, // Tiempo acumulativo sin saltos
+                      timeSeconds: _timeSeconds,
                       screenSize: size,
                       formationOverride: 1.0,
                       planetBodyPicture: _planetBodyPicture,
@@ -372,58 +369,60 @@ class _PortfolioScreenState extends State<PortfolioScreen>
           // 3. Índice Lateral (Side Navigation)
           // 3. Índice Lateral (Side Navigation) - Restaurado a la izquierda con más margen
           if (size.width > 1000)
-            Positioned(
-              left: 0, // Un poco más separado del borde para balancear
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: Stack(
-                  alignment: Alignment.center,
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Indicador móvil suave vertical
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 600),
-                      curve: Curves.easeOutBack,
-                      top: (_getNavIndex() * 56.0) + (56.0 / 2) - (40.0 / 2),
-                      // Centrado: (AnchoContainer / 2) - (AnchoIndicador / 2)
-                      // (140 / 2) - (120 / 2) = 70 - 60 = 10
-                      left: 10.0,
-                      child: _RotatingStarsIndicator(
-                        animation: _tickerController,
-                        radiusX: _navRadiiX[_activeSection] ?? 50.0,
-                        radiusY: _navRadiiY[_activeSection] ?? 15.0,
-                      ),
-                    ),
-
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+            ValueListenableBuilder<String>(
+              valueListenable: _activeSectionNotifier,
+              builder: (context, activeSection, _) {
+                return Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
                       children: [
-                        _buildNavItem("Inicio", _heroKey),
-                        _buildNavItem("Sobre Mí", _aboutKey),
-                        _buildNavItem("Skills", _techKey),
-                        _buildNavItem("Proyectos", _projectsKey),
-                        _buildNavItem("Contacto", _contactKey),
+                        // Indicador móvil suave vertical
+                        AnimatedPositioned(
+                          duration: const Duration(milliseconds: 600),
+                          curve: Curves.easeOutBack,
+                          top: (_getNavIndex(activeSection) * 56.0) + (56.0 / 2) - (40.0 / 2),
+                          left: 10.0,
+                          child: _RotatingStarsIndicator(
+                            animation: _tickerController,
+                            activeSection: activeSection,
+                          ),
+                        ),
+
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            _buildNavItem("Inicio", _heroKey, activeSection),
+                            _buildNavItem("Sobre Mí", _aboutKey, activeSection),
+                            _buildNavItem("Skills", _techKey, activeSection),
+                            _buildNavItem("Proyectos", _projectsKey, activeSection),
+                            _buildNavItem("Contacto", _contactKey, activeSection),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              }
             ),
         ],
       ),
     );
   }
 
-  int _getNavIndex() {
+  int _getNavIndex(String activeSection) {
     final sections = ["Inicio", "Sobre Mí", "Skills", "Proyectos", "Contacto"];
-    final index = sections.indexOf(_activeSection);
+    final index = sections.indexOf(activeSection);
     return index >= 0 ? index : 0;
   }
 
-  Widget _buildNavItem(String label, GlobalKey key) {
-    final isActive = _activeSection == label;
+  Widget _buildNavItem(String label, GlobalKey key, String activeSection) {
+    final isActive = activeSection == label;
 
     return Container(
       width: 140.0, // Ancho fijo para centrado perfecto
@@ -452,13 +451,28 @@ class _PortfolioScreenState extends State<PortfolioScreen>
 
 class _RotatingStarsIndicator extends StatelessWidget {
   final Animation<double> animation;
-  final double radiusX;
-  final double radiusY;
+  final String activeSection;
+
+  // Radios de órbita individuales para cada sección
+  static const Map<String, double> _radiiX = {
+    "Inicio": 35.0,
+    "Sobre Mí": 45.0,
+    "Skills": 35.0,
+    "Proyectos": 50.0,
+    "Contacto": 45.0,
+  };
+
+  static const Map<String, double> _radiiY = {
+    "Inicio": 15.0,
+    "Sobre Mí": 15.0,
+    "Skills": 15.0,
+    "Proyectos": 15.0,
+    "Contacto": 15.0,
+  };
 
   const _RotatingStarsIndicator({
     required this.animation,
-    required this.radiusX,
-    required this.radiusY,
+    required this.activeSection,
   });
 
   @override
@@ -477,20 +491,23 @@ class _RotatingStarsIndicator extends StatelessWidget {
           height: 40,
           child: Stack(
             alignment: Alignment.center,
-            children: [_buildStar(0, time), _buildStar(pi, time)],
+            children: [
+              _buildStar(0, time, _radiiX[activeSection] ?? 50.0, _radiiY[activeSection] ?? 15.0),
+              _buildStar(pi, time, _radiiX[activeSection] ?? 50.0, _radiiY[activeSection] ?? 15.0)
+            ],
           ),
         );
       },
     );
   }
 
-  Widget _buildStar(double startAngle, double time) {
+  Widget _buildStar(double startAngle, double time, double radiusX, double radiusY) {
     final angle = startAngle + time * 2.5;
 
     return Transform.translate(
       offset: Offset(cos(angle) * radiusX, sin(angle) * radiusY),
       child: Container(
-        width: 4, // Un poco más pequeñas para ganar FPS
+        width: 4,
         height: 4,
         decoration: BoxDecoration(
           color: const Color(0xFF7EFFF5),
@@ -498,7 +515,7 @@ class _RotatingStarsIndicator extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF7EFFF5).withOpacity(0.5),
-              blurRadius: 4, // Menos blur = más FPS en Web
+              blurRadius: 4,
               spreadRadius: 1,
             ),
           ],

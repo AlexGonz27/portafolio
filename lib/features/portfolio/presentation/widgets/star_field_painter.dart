@@ -14,6 +14,9 @@ class StarFieldPainter extends CustomPainter {
   final Picture? planetBodyPicture;
   final Picture? planetRingsPicture;
 
+  // Cache de Paths para evitar crearlos 60 veces por segundo por cada estrella
+  static final Map<int, Path> _starPathCache = {};
+
   StarFieldPainter({
     required this.particles,
     required this.phaseController,
@@ -31,23 +34,19 @@ class StarFieldPainter extends CustomPainter {
     final paint = Paint()..style = PaintingStyle.fill;
     
     final finalFormationT = formationOverride ?? phaseController.formationProgress;
-    // Solo usamos el bake si está formado al 100% y las imágenes están listas
     final bool canUseBaking = finalFormationT >= 1.0 && planetBodyPicture != null && planetRingsPicture != null;
 
     if (canUseBaking) {
-      // 1. Dibujar estrellas de fondo (solo las que NO son planeta)
-      // Estas mantienen su movimiento browniano individual
+      // 1. Dibujar estrellas de fondo
       for (var particle in particles) {
         if (!particle.isPlanet) {
           _updateBackgroundParticle(particle, size);
           _drawStar(canvas, particle, paint);
         }
       }
-
-      // 2. Dibujar Saturno "Horneado" (Cero cálculos de Path por estrella)
+      // 2. Dibujar Saturno "Horneado"
       _drawBakedPlanet(canvas, size);
     } else {
-      // Lógica original para cuando se está formando o no hay caché
       _updateParticlePositions(size);
       for (var particle in particles) {
         _drawStar(canvas, particle, paint);
@@ -64,36 +63,30 @@ class StarFieldPainter extends CustomPainter {
   void _drawBakedPlanet(Canvas canvas, Size size) {
     Offset endCenter = Offset(size.width * 0.82, size.height * 0.50);
 
-    // CUERPO: Rotación simple
     canvas.save();
     canvas.translate(endCenter.dx, endCenter.dy);
     canvas.rotate(timeSeconds * 0.15); 
     canvas.drawPicture(planetBodyPicture!);
     canvas.restore();
 
-    // ANILLOS: Inclinación + Escala Elíptica + Rotación
     canvas.save();
     canvas.translate(endCenter.dx, endCenter.dy);
-    canvas.rotate(0.20); // Tilt constante (el mismo de tu lógica)
-    canvas.scale(1.0, 0.32); // Squeeze elíptico constante
-    canvas.rotate(timeSeconds * 0.3); // Rotación orbital
+    canvas.rotate(0.20); 
+    canvas.scale(1.0, 0.32); 
+    canvas.rotate(timeSeconds * 0.3); 
     canvas.drawPicture(planetRingsPicture!);
     canvas.restore();
   }
 
   void _updateParticlePositions(Size size) {
-    // Posición fija optimizada
     Offset endCenter = Offset(size.width * 0.82, size.height * 0.50);
-
-    final finalFormationT =
-        formationOverride ?? phaseController.formationProgress;
+    final finalFormationT = formationOverride ?? phaseController.formationProgress;
     final isFullyFormed = finalFormationT >= 1.0;
 
     for (var p in particles) {
       p.lastPosition = p.position;
 
       if (p.isPlanet && p.planetRadius != null && p.planetAngle != null) {
-        // CÁLCULO DE ROTACIÓN ORBITAL
         double orbitSpeed = p.isRing ? 0.3 : 0.15;
         double currentAngle = p.planetAngle! + timeSeconds * orbitSpeed;
 
@@ -112,33 +105,17 @@ class StarFieldPainter extends CustomPainter {
         Offset targetPos = endCenter + Offset(tx, ty);
 
         if (isFullyFormed) {
-          // OPTIMIZACIÓN: Saltamos el lerp si ya está formado
           p.position = targetPos;
         } else {
-          // Solo calculamos el caos si es necesario
           double driftAmount = 1.0 - (finalFormationT * 0.85);
-          double brownianX =
-              cos(p.brownianAngle + timeSeconds * 0.8) *
-              p.brownianSpeed *
-              20 *
-              driftAmount;
-          double brownianY =
-              sin(p.brownianAngle + timeSeconds * 0.8) *
-              p.brownianSpeed *
-              20 *
-              driftAmount;
-          Offset chaoticPos = Offset(
-            p.origin.dx + brownianX,
-            p.origin.dy + brownianY,
-          );
+          double brownianX = cos(p.brownianAngle + timeSeconds * 0.8) * p.brownianSpeed * 20 * driftAmount;
+          double brownianY = sin(p.brownianAngle + timeSeconds * 0.8) * p.brownianSpeed * 20 * driftAmount;
+          Offset chaoticPos = Offset(p.origin.dx + brownianX, p.origin.dy + brownianY);
           p.position = Offset.lerp(chaoticPos, targetPos, finalFormationT)!;
         }
       } else {
-        // Estrellas de fondo
-        double brownianX =
-            cos(p.brownianAngle + timeSeconds * 0.8) * p.brownianSpeed * 20;
-        double brownianY =
-            sin(p.brownianAngle + timeSeconds * 0.8) * p.brownianSpeed * 20;
+        double brownianX = cos(p.brownianAngle + timeSeconds * 0.8) * p.brownianSpeed * 20;
+        double brownianY = sin(p.brownianAngle + timeSeconds * 0.8) * p.brownianSpeed * 20;
         p.position = Offset(p.origin.dx + brownianX, p.origin.dy + brownianY);
       }
     }
@@ -146,19 +123,15 @@ class StarFieldPainter extends CustomPainter {
 
   void _drawStar(Canvas canvas, StarParticle particle, Paint paint) {
     double currentOpacity = particle.currentOpacity(timeSeconds);
-    if (currentOpacity < 0.05) return;
+    if (currentOpacity < 0.1) return; // Umbral de opacidad más alto para saltar estrellas tenues
 
-    // Glow selectivo: Solo para estrellas marcadas y con tamaño suficiente
-    if (particle.hasGlow && particle.size > 1.5) {
-      final glowPaint =
-          Paint()
-            ..style = PaintingStyle.fill
-            ..color = particle.particleColor.withOpacity(currentOpacity * 0.4)
-            ..maskFilter = MaskFilter.blur(
-              BlurStyle.normal,
-              particle.size * 0.8,
-            );
-      canvas.drawCircle(particle.position, particle.size * 1.5, glowPaint);
+    // Glow ultra-optimizado: Solo para estrellas muy grandes
+    if (particle.hasGlow && particle.size > 3.0) {
+      final glowPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = particle.particleColor.withOpacity(currentOpacity * 0.3)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0); // Blur fijo y pequeño
+      canvas.drawCircle(particle.position, particle.size * 1.2, glowPaint);
     }
 
     paint.color = (particle.isPlanet
@@ -166,37 +139,43 @@ class StarFieldPainter extends CustomPainter {
             : AppColors.starCore.withOpacity(0.8))
         .withOpacity(currentOpacity);
 
-    // Solo usar paths de estrellas para las más grandes (> 2.5px)
-    if (particle.size > 2.5) {
+    // Solo usar paths para estrellas grandes (> 3.0px)
+    if (particle.size > 3.0) {
       canvas.save();
       canvas.translate(particle.position.dx, particle.position.dy);
       canvas.rotate(particle.rotationAngle);
 
-      Path starPath;
-      switch (particle.starType) {
-        case 0:
-          starPath = _createStarPath(5, particle.size, particle.size * 0.4);
-          break;
-        case 1:
-          starPath = _createStarPath(
-            4,
-            particle.size * 1.2,
-            particle.size * 0.2,
-          );
-          break;
-        default:
-          starPath = _createStarPath(
-            8,
-            particle.size * 0.9,
-            particle.size * 0.5,
-          );
-          break;
-      }
+      // Usar cache de Path
+      Path starPath = _getStarPath(particle.starType, particle.size);
       canvas.drawPath(starPath, paint);
       canvas.restore();
     } else {
+      // Círculo simple para la gran mayoría
       canvas.drawCircle(particle.position, particle.size * 0.5, paint);
     }
+  }
+
+  Path _getStarPath(int type, double size) {
+    // Generar una llave única para el cache (tipo + tamaño aproximado)
+    int cacheKey = type * 1000 + (size * 10).toInt();
+    if (_starPathCache.containsKey(cacheKey)) {
+      return _starPathCache[cacheKey]!;
+    }
+
+    Path path;
+    switch (type) {
+      case 0:
+        path = _createStarPath(5, size, size * 0.4);
+        break;
+      case 1:
+        path = _createStarPath(4, size * 1.2, size * 0.2);
+        break;
+      default:
+        path = _createStarPath(8, size * 0.9, size * 0.5);
+        break;
+    }
+    _starPathCache[cacheKey] = path;
+    return path;
   }
 
   Path _createStarPath(int points, double outerRadius, double innerRadius) {
@@ -207,10 +186,8 @@ class StarFieldPainter extends CustomPainter {
       double theta = i * step - pi / 2;
       double x = r * cos(theta);
       double y = r * sin(theta);
-      if (i == 0)
-        path.moveTo(x, y);
-      else
-        path.lineTo(x, y);
+      if (i == 0) path.moveTo(x, y);
+      else path.lineTo(x, y);
     }
     path.close();
     return path;
@@ -219,6 +196,7 @@ class StarFieldPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant StarFieldPainter oldDelegate) {
     return oldDelegate.timeSeconds != timeSeconds ||
-        oldDelegate.screenSize != screenSize;
+        oldDelegate.screenSize != screenSize ||
+        oldDelegate.phaseController.scrollOffset != phaseController.scrollOffset;
   }
 }
