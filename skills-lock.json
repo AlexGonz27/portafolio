@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "skills": {
+    "flutter-animations": {
+      "source": "madteacher/mad-agents-skills",
+      "sourceType": "github",
+      "computedHash": "0c62d299cfdb82a8a22eadcb9b58c998cb6ceb85368a342689143a0278e4c7bb"
+    },
+    "flutter-frontend-design": {
+      "source": "syeduzaif/flutter-frontend-design",
+      "sourceType": "github",
+      "computedHash": "462bfd561f443fbfe20c13d9722f89754e84353af841ccf318402ed07ed83c33"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "516bd2154eb843a8240e43d5b285229129853114ad7075a5e141e1c08e408c84"
+    }
+  }
+}

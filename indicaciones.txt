@@ -1,0 +1,67 @@
+# PROMPT PARA ANIMACIÓN NARRATIVA: ESTRELLAS → SISTEMA SOLAR
+# ==========================================================
+
+## VISIÓN GENERAL
+Crear una animación en Flutter que muestre una "danza cósmica" donde partículas/estrellas se agrupan y transforman para formar un sistema solar completo. La animación debe tener una duración de 3-5 segundos y ser reproducible (con repetición o al hacer scroll/hover).
+
+## ESTRUCTURA DE LA ANIMACIÓN (Fases)
+
+### FASE 1: CAOS ESTELAR (0-1.5 segundos)
+- Pantalla completamente negra
+- Aparecen 200-300 estrellas/partículas dispersas aleatoriamente
+- Las estrellas tienen diferentes tamaños (2-6 píxeles) y brillos
+- Movimiento aleatorio tipo "movimiento browniano" o flotante
+- Usar `among_stars_animation` como base, pero con control sobre posición
+
+### FASE 2: ATRACCIÓN GRAVITACIONAL (1.5-3 segundos)
+- Las estrellas comienzan a moverse hacia el centro de la pantalla
+- Efecto de "remolino" o espiral mientras se acercan
+- Velocidad variable: las más lejanas se mueven más rápido
+- Se forman 8-10 grupos de estrellas (futuros planetas)
+- Un grupo central más grande (el Sol) comienza a formarse
+
+### FASE 3: FORMACIÓN DE PLANETAS (3-4.5 segundos)
+- Cada grupo de estrellas colapsa formando un círculo/planeta
+- Los planetas aparecen con diferentes:
+  - Tamaños (el Sol: 80px, Júpiter: 45px, Tierra: 25px, etc.)
+  - Colores (rojo para Marte, azul para Neptuno, etc.)
+  - Texturas sutiles (opcional: usar gradientes)
+- El Sol emite un glow pulsante
+
+### FASE 4: SISTEMA SOLAR COMPLETO (4.5+ segundos)
+- Los planetas se posicionan en órbitas circulares alrededor del Sol
+- Cada planeta tiene:
+  - Radio orbital diferente (Mercurio: 100px, Venus: 140px, Tierra: 180px, etc.)
+  - Velocidad orbital variable (los internos giran más rápido)
+  - Una luna para la Tierra (opcional)
+- El sistema solar rota y es interactivo con el mouse
+
+## INTERACTIVIDAD POST-ANIMACIÓN
+- Al pasar el mouse sobre un planeta: mostrar nombre y 3 datos
+- Al hacer click: navegar a una sección del portafolio
+- El usuario puede hacer zoom (scroll) y arrastrar (pan) para explorar
+- El fondo mantiene estrellas titilantes estáticas
+
+## REQUERIMIENTOS TÉCNICOS
+
+### Dependencias necesarias:
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  among_stars_animation: ^latest
+  flutter_earth_globe: ^latest  # Opcional para planetas 3D
+  simple_animations: ^latest     # Para control de fases
+  flutter_svg: ^latest           # Para texturas de planetas
+
+  | Área | Tecnologías |
+|------|-------------|
+| Lenguajes | Python, Java, Node.js, Dart, C++|
+| Frameworks | FastAPI, Spring Boot, Express, Dart Frog, Flutter|
+| Bases de datos | PostgreSQL, MySQL, MongoDB, Firebase |
+| Contenedores | Docker, Docker Compose |
+| Cloud | AWS (EC2, RDS, Lambda, S3), Azure|
+| VPS | DigitalOcean, InterServer, Contabo, Hostinger |
+| APIs | REST, GraphQL, WebSockets |
+| Testing | Pytest, JUnit, Postman |
+| Monitoreo | Prometheus, Grafana |
