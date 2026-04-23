@@ -21,9 +21,9 @@ class HeroSection extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        height: screenHeight,
+        constraints: BoxConstraints(minHeight: screenHeight),
         width: isMobile ? double.infinity : screenWidth * 0.65,
-        padding: const EdgeInsets.only(top: 80.0),
+        padding: const EdgeInsets.only(top: 80.0, bottom: 40.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -38,10 +38,28 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   // Anchos estimados para centrado dinámico (basados en fontSize 11 + padding)
   final Map<String, double> _navWidths = {
     "Inicio": 80.0,
-    "Sobre Mí": 95.0,
-    "Skills": 85.0,
+    "Sobre Mí": 98.0,
+    "Skills": 80.0,
     "Proyectos": 105.0,
     "Contacto": 100.0,
+  };
+
+  // Radios de órbita X individuales para cada sección (para ajustar el ancho de la elipse)
+  final Map<String, double> _navRadiiX = {
+    "Inicio": 35.0,
+    "Sobre Mí": 45.0,
+    "Skills": 35.0,
+    "Proyectos": 50.0,
+    "Contacto": 45.0,
+  };
+
+  // Radios de órbita Y individuales para cada sección (para ajustar el alto de la elipse)
+  final Map<String, double> _navRadiiY = {
+    "Inicio": 15.0,
+    "Sobre Mí": 15.0,
+    "Skills": 15.0,
+    "Proyectos": 15.0,
+    "Contacto": 15.0,
   };
 
   void _scrollToSection(GlobalKey key) {
@@ -247,7 +265,10 @@ class _PortfolioScreenState extends State<PortfolioScreen>
                   maxWidth: AppConstants.desktopMaxWidth,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  padding: const EdgeInsets.only(
+                    left: 44.0,
+                    right: 24.0,
+                  ), // +20px a la derecha
                   child: Column(
                     children: [
                       HeroSection(
@@ -271,32 +292,35 @@ class _PortfolioScreenState extends State<PortfolioScreen>
           ),
 
           // 3. Índice Lateral (Side Navigation)
+          // 3. Índice Lateral (Side Navigation) - Restaurado a la izquierda con más margen
           if (size.width > 1000)
             Positioned(
-              left: 40,
+              left: 20, // Un poco más separado del borde para balancear
               top: 0,
               bottom: 0,
               child: Center(
                 child: Stack(
-                  alignment: Alignment.centerLeft,
+                  alignment: Alignment.center,
                   clipBehavior: Clip.none,
                   children: [
-                    // Indicador móvil suave (ahora viaja en X e Y)
+                    // Indicador móvil suave vertical
                     AnimatedPositioned(
                       duration: const Duration(milliseconds: 600),
                       curve: Curves.easeOutBack,
                       top: (_getNavIndex() * 56.0) + (56.0 / 2) - (40.0 / 2),
-                      // El centro de la palabra está en (ancho_estimado / 2)
-                      // Queremos que el centro del indicador (60) coincida con ese punto
-                      left: (_navWidths[_activeSection] ?? 80.0) / 2 - 60,
+                      // Centrado: (AnchoContainer / 2) - (AnchoIndicador / 2)
+                      // (140 / 2) - (120 / 2) = 70 - 60 = 10
+                      left: 10.0,
                       child: _RotatingStarsIndicator(
                         animation: _tickerController,
+                        radiusX: _navRadiiX[_activeSection] ?? 50.0,
+                        radiusY: _navRadiiY[_activeSection] ?? 15.0,
                       ),
                     ),
 
                     Column(
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         _buildNavItem("Inicio", _heroKey),
                         _buildNavItem("Sobre Mí", _aboutKey),
@@ -324,8 +348,9 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     final isActive = _activeSection == label;
 
     return Container(
-      height: 56.0, // Altura fija garantizada para alineación perfecta
-      alignment: Alignment.centerLeft,
+      width: 140.0, // Ancho fijo para centrado perfecto
+      height: 56.0,
+      alignment: Alignment.center,
       child: TextButton(
         onPressed: () => _scrollToSection(key),
         style: TextButton.styleFrom(
@@ -349,7 +374,14 @@ class _PortfolioScreenState extends State<PortfolioScreen>
 
 class _RotatingStarsIndicator extends StatelessWidget {
   final Animation<double> animation;
-  const _RotatingStarsIndicator({required this.animation});
+  final double radiusX;
+  final double radiusY;
+
+  const _RotatingStarsIndicator({
+    required this.animation,
+    required this.radiusX,
+    required this.radiusY,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -376,9 +408,6 @@ class _RotatingStarsIndicator extends StatelessWidget {
 
   Widget _buildStar(double startAngle, double time) {
     final angle = startAngle + time * 2.5;
-    // Órbita más ancha para no chocar con palabras largas
-    const radiusX = 65.0;
-    const radiusY = 18.0;
 
     return Transform.translate(
       offset: Offset(cos(angle) * radiusX, sin(angle) * radiusY),
