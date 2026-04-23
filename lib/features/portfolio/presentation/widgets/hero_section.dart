@@ -4,11 +4,16 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 
 class HeroSection extends StatelessWidget {
-  const HeroSection({Key? key}) : super(key: key);
+  final VoidCallback? onViewWorkPressed;
+  
+  const HeroSection({
+    Key? key,
+    this.onViewWorkPressed,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Calculamos la altura para que ocupe todo el alto de la pantalla inicialmente
+    // ... resto del build ...
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
@@ -77,9 +82,7 @@ class HeroSection extends StatelessWidget {
             
             // Call to Action
             ElevatedButton(
-              onPressed: () {
-                // TODO: Scroll to projects
-              },
+              onPressed: onViewWorkPressed,
               child: const Text('Ver mi trabajo'),
             )
             .animate(delay: 1200.ms)
