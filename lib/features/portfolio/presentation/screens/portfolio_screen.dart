@@ -1,5 +1,7 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../widgets/star_particle.dart';
 import '../widgets/star_field_painter.dart';
@@ -24,6 +26,8 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   late AnimationController _formationController;
 
   List<StarParticle> _particles = [];
+  ui.Picture? _planetBodyPicture;
+  ui.Picture? _planetRingsPicture;
   double _timeSeconds = 0.0;
   double _scrollExtent = 3000.0;
 
@@ -34,15 +38,6 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   final GlobalKey _contactKey = GlobalKey();
 
   String _activeSection = "Inicio";
-
-  // Anchos estimados para centrado dinámico (basados en fontSize 11 + padding)
-  final Map<String, double> _navWidths = {
-    "Inicio": 80.0,
-    "Sobre Mí": 98.0,
-    "Skills": 80.0,
-    "Proyectos": 105.0,
-    "Contacto": 100.0,
-  };
 
   // Radios de órbita X individuales para cada sección (para ajustar el ancho de la elipse)
   final Map<String, double> _navRadiiX = {
@@ -139,7 +134,86 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     super.didChangeDependencies();
     if (_particles.isEmpty) {
       _initParticles(MediaQuery.of(context).size);
+      _bakePlanetLayers();
     }
+  }
+
+  void _bakePlanetLayers() {
+    // 1. Hornear el CUERPO
+    final bodyRecorder = ui.PictureRecorder();
+    final bodyCanvas = Canvas(bodyRecorder);
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    for (var p in _particles) {
+      if (p.isPlanet && !p.isRing) {
+        _drawFidelityParticle(bodyCanvas, p, paint);
+      }
+    }
+    _planetBodyPicture = bodyRecorder.endRecording();
+
+    // 2. Hornear los ANILLOS
+    final ringsRecorder = ui.PictureRecorder();
+    final ringsCanvas = Canvas(ringsRecorder);
+
+    for (var p in _particles) {
+      if (p.isRing) {
+        _drawFidelityParticle(ringsCanvas, p, paint);
+      }
+    }
+    _planetRingsPicture = ringsRecorder.endRecording();
+  }
+
+  void _drawFidelityParticle(Canvas canvas, StarParticle p, Paint paint) {
+    if (p.planetRadius == null || p.planetAngle == null) return;
+    
+    // Posición relativa al centro (0,0) antes de la rotación orbital
+    final pos = Offset(
+      p.planetRadius! * cos(p.planetAngle!),
+      p.planetRadius! * sin(p.planetAngle!),
+    );
+
+    // Glow (exactamente como en tu pintor)
+    if (p.hasGlow && p.size > 1.5) {
+      final glowPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = p.particleColor.withOpacity(p.baseOpacity * 0.4)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, p.size * 0.8);
+      canvas.drawCircle(pos, p.size * 1.5, glowPaint);
+    }
+
+    paint.color = AppColors.starCore.withOpacity(p.baseOpacity);
+    
+    if (p.size > 2.5) {
+      canvas.save();
+      canvas.translate(pos.dx, pos.dy);
+      canvas.rotate(p.rotationAngle);
+      
+      Path starPath;
+      switch (p.starType) {
+        case 0: starPath = _createStarPath(5, p.size, p.size * 0.4); break;
+        case 1: starPath = _createStarPath(4, p.size * 1.2, p.size * 0.2); break;
+        default: starPath = _createStarPath(8, p.size * 0.9, p.size * 0.5); break;
+      }
+      canvas.drawPath(starPath, paint);
+      canvas.restore();
+    } else {
+      canvas.drawCircle(pos, p.size * 0.5, paint);
+    }
+  }
+
+  Path _createStarPath(int points, double outerRadius, double innerRadius) {
+    Path path = Path();
+    double step = pi / points;
+    for (int i = 0; i < 2 * points; i++) {
+      double r = (i % 2 == 0) ? outerRadius : innerRadius;
+      double theta = i * step - pi / 2;
+      double x = r * cos(theta);
+      double y = r * sin(theta);
+      if (i == 0) path.moveTo(x, y);
+      else path.lineTo(x, y);
+    }
+    path.close();
+    return path;
   }
 
   void _initParticles(Size size) {
@@ -213,6 +287,8 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     _tickerController.dispose();
     _formationController.dispose();
     _scrollController.dispose();
+    _planetBodyPicture?.dispose();
+    _planetRingsPicture?.dispose();
     super.dispose();
   }
 
@@ -249,6 +325,8 @@ class _PortfolioScreenState extends State<PortfolioScreen>
                           _timeSeconds, // Tiempo acumulativo sin saltos
                       screenSize: size,
                       formationOverride: 1.0,
+                      planetBodyPicture: _planetBodyPicture,
+                      planetRingsPicture: _planetRingsPicture,
                     ),
                   );
                 },
@@ -295,7 +373,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
           // 3. Índice Lateral (Side Navigation) - Restaurado a la izquierda con más margen
           if (size.width > 1000)
             Positioned(
-              left: 20, // Un poco más separado del borde para balancear
+              left: 0, // Un poco más separado del borde para balancear
               top: 0,
               bottom: 0,
               child: Center(
