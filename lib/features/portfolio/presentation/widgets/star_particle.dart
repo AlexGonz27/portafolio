@@ -23,6 +23,7 @@ class StarParticle {
   final bool isRing;          // Si es parte de los anillos (para efectos específicos)
   double? planetRadius;       // Radio respecto al centro del planeta
   double? planetAngle;        // Ángulo inicial (para rotación orbital)
+  final bool hasGlow;
   final Color particleColor;  // Color específico asignado en la creación
 
   // Para efectos de rastro (opcional)
@@ -43,6 +44,7 @@ class StarParticle {
     required this.attractionGroupId,
     required this.brownianSpeed,
     required this.brownianAngle,
+    required this.hasGlow,
     required this.particleColor,
     this.isPlanet = false,
     this.isRing = false,

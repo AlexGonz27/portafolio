@@ -34,24 +34,17 @@ class StarFieldPainter extends CustomPainter {
   }
 
   void _updateParticlePositions(Size size) {
-    // El ancla del planeta siempre está en su posición final (derecha)
-    // Ajustado al 82% para dejar ~65% libre a la izquierda para el contenido
+    // Posición fija optimizada
     Offset endCenter = Offset(size.width * 0.82, size.height * 0.50);
-    Offset currentPlanetCenter = endCenter; 
-
-    // La formación depende exclusivamente de la animación suavizada por scroll
+    
     final finalFormationT = formationOverride ?? phaseController.formationProgress;
-    final gravity = phaseController.gravityForce;
+    final isFullyFormed = finalFormationT >= 1.0;
 
     for (var p in particles) {
       p.lastPosition = p.position;
 
-      double driftAmount = 1.0 - (max(finalFormationT, gravity) * 0.85);
-      double brownianX = cos(p.brownianAngle + timeSeconds * 0.8) * p.brownianSpeed * 20 * driftAmount;
-      double brownianY = sin(p.brownianAngle + timeSeconds * 0.8) * p.brownianSpeed * 20 * driftAmount;
-      Offset chaoticPos = Offset(p.origin.dx + brownianX, p.origin.dy + brownianY);
-
       if (p.isPlanet && p.planetRadius != null && p.planetAngle != null) {
+        // CÁLCULO DE ROTACIÓN ORBITAL
         double orbitSpeed = p.isRing ? 0.3 : 0.15;
         double currentAngle = p.planetAngle! + timeSeconds * orbitSpeed;
         
@@ -67,45 +60,61 @@ class StarFieldPainter extends CustomPainter {
           ty = rotatedY;
         }
 
-        Offset targetPos = currentPlanetCenter + Offset(tx, ty);
-        p.position = Offset.lerp(chaoticPos, targetPos, finalFormationT)!;
+        Offset targetPos = endCenter + Offset(tx, ty);
+
+        if (isFullyFormed) {
+          // OPTIMIZACIÓN: Saltamos el lerp si ya está formado
+          p.position = targetPos;
+        } else {
+          // Solo calculamos el caos si es necesario
+          double driftAmount = 1.0 - (finalFormationT * 0.85);
+          double brownianX = cos(p.brownianAngle + timeSeconds * 0.8) * p.brownianSpeed * 20 * driftAmount;
+          double brownianY = sin(p.brownianAngle + timeSeconds * 0.8) * p.brownianSpeed * 20 * driftAmount;
+          Offset chaoticPos = Offset(p.origin.dx + brownianX, p.origin.dy + brownianY);
+          p.position = Offset.lerp(chaoticPos, targetPos, finalFormationT)!;
+        }
       } else {
-        p.position = chaoticPos;
+        // Estrellas de fondo
+        double brownianX = cos(p.brownianAngle + timeSeconds * 0.8) * p.brownianSpeed * 20;
+        double brownianY = sin(p.brownianAngle + timeSeconds * 0.8) * p.brownianSpeed * 20;
+        p.position = Offset(p.origin.dx + brownianX, p.origin.dy + brownianY);
       }
     }
   }
 
   void _drawStar(Canvas canvas, StarParticle particle, Paint paint) {
     double currentOpacity = particle.currentOpacity(timeSeconds);
-    
-    // Core paint
-    paint.color = AppColors.starCore.withOpacity(currentOpacity);
+    if (currentOpacity < 0.05) return; 
 
-    // Glow individual
-    final glowPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = particle.particleColor.withOpacity(currentOpacity * 0.5)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, particle.size);
-
-    canvas.save();
-    canvas.translate(particle.position.dx, particle.position.dy);
-    canvas.rotate(particle.rotationAngle);
-
-    Path starPath;
-    switch (particle.starType) {
-      case 0: starPath = _createStarPath(5, particle.size, particle.size * 0.4); break;
-      case 1: starPath = _createStarPath(4, particle.size * 1.2, particle.size * 0.2); break;
-      case 2: starPath = _createStarPath(8, particle.size * 0.9, particle.size * 0.5); break;
-      default: 
-        canvas.drawCircle(Offset.zero, particle.size * 0.4, glowPaint);
-        canvas.drawCircle(Offset.zero, particle.size * 0.4, paint);
-        canvas.restore();
-        return;
+    // Glow selectivo: Solo para estrellas marcadas y con tamaño suficiente
+    if (particle.hasGlow && particle.size > 1.5) {
+      final glowPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = particle.particleColor.withOpacity(currentOpacity * 0.4)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, particle.size * 0.8);
+      canvas.drawCircle(particle.position, particle.size * 1.5, glowPaint);
     }
 
-    canvas.drawPath(starPath, glowPaint);
-    canvas.drawPath(starPath, paint);
-    canvas.restore();
+    paint.color = (particle.isPlanet ? AppColors.starCore : AppColors.starCore.withOpacity(0.8))
+        .withOpacity(currentOpacity);
+
+    // Solo usar paths de estrellas para las más grandes (> 2.5px)
+    if (particle.size > 2.5) {
+      canvas.save();
+      canvas.translate(particle.position.dx, particle.position.dy);
+      canvas.rotate(particle.rotationAngle);
+      
+      Path starPath;
+      switch (particle.starType) {
+        case 0: starPath = _createStarPath(5, particle.size, particle.size * 0.4); break;
+        case 1: starPath = _createStarPath(4, particle.size * 1.2, particle.size * 0.2); break;
+        default: starPath = _createStarPath(8, particle.size * 0.9, particle.size * 0.5); break;
+      }
+      canvas.drawPath(starPath, paint);
+      canvas.restore();
+    } else {
+      canvas.drawCircle(particle.position, particle.size * 0.5, paint);
+    }
   }
 
   Path _createStarPath(int points, double outerRadius, double innerRadius) {
@@ -126,7 +135,6 @@ class StarFieldPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant StarFieldPainter oldDelegate) {
     return oldDelegate.timeSeconds != timeSeconds ||
-           oldDelegate.formationOverride != formationOverride ||
            oldDelegate.screenSize != screenSize;
   }
 }
