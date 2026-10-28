@@ -47,6 +47,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          npx -y wrangler pages project create portafolio --production-branch=main || true
-          npx -y wrangler pages deploy build/web --project-name=portafolio --commit-dirty=true
+          npx -y wrangler pages project create alexgonzalez-portafolio --production-branch=main || true
+          npx -y wrangler pages deploy build/web --project-name=alexgonzalez-portafolio --commit-dirty=true
 
