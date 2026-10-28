@@ -24,15 +24,15 @@ class ContactSection extends StatelessWidget {
           width: 800, // Limitar ancho del header en el centro
           child: SectionHeader(number: "04.", title: "¿Hablamos?"),
         ),
-        
+
         const SizedBox(height: 20),
-        
+
         Text(
-          "Actualmente estoy abierto a nuevas oportunidades.\nYa sea que tengas una pregunta o simplemente quieras saludar, ¡intentaré responderte lo antes posible!",
+          "Actualmente estoy abierto a nuevas oportunidades.\n¡intentaré responderte lo antes posible!",
           style: Theme.of(context).textTheme.bodyLarge,
           textAlign: TextAlign.center,
         ),
-        
+
         const SizedBox(height: 60),
 
         Wrap(
@@ -47,7 +47,9 @@ class ContactSection extends StatelessWidget {
               onTap: () => _launchUrl(AppConstants.whatsappUrl),
             ),
             _ContactButton(
-              icon: Icons.code, // Placeholder for Github since Icons doesn't have it built-in easily
+              icon:
+                  Icons
+                      .code, // Placeholder for Github since Icons doesn't have it built-in easily
               label: "GitHub",
               value: "AlexGonz27",
               onTap: () => _launchUrl(AppConstants.githubUrl),
@@ -60,15 +62,15 @@ class ContactSection extends StatelessWidget {
             ),
           ],
         ),
-        
+
         const SizedBox(height: 100),
-        
+
         // Branding del pie de página
         Text(
           "Diseñado y construido por Alexander A. Gonzalez A.",
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 8),
         Text(
@@ -115,9 +117,10 @@ class _ContactButtonState extends State<_ContactButton> {
           child: GlassmorphismCard(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
             customBorder: Border.all(
-              color: isHovered 
-                ? AppColors.accentPrimary.withOpacity(0.5) 
-                : Colors.white.withOpacity(0.1),
+              color:
+                  isHovered
+                      ? AppColors.accentPrimary.withOpacity(0.5)
+                      : Colors.white.withOpacity(0.1),
               width: 1,
             ),
             child: Column(
@@ -125,21 +128,30 @@ class _ContactButtonState extends State<_ContactButton> {
                 Icon(
                   widget.icon,
                   size: 32,
-                  color: isHovered ? AppColors.accentPrimary : AppColors.textSecondary,
+                  color:
+                      isHovered
+                          ? AppColors.accentPrimary
+                          : AppColors.textSecondary,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   widget.label,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isHovered ? AppColors.textPrimary : AppColors.textSecondary,
+                    color:
+                        isHovered
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   widget.value,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: isHovered ? AppColors.accentPrimary : AppColors.textSecondary,
+                    color:
+                        isHovered
+                            ? AppColors.accentPrimary
+                            : AppColors.textSecondary,
                   ),
                 ),
               ],

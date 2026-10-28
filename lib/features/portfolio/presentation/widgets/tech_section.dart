@@ -4,21 +4,48 @@ import '../../../../shared/widgets/glassmorphism_card.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class TechSection extends StatelessWidget {
-  const TechSection({Key? key}) : super(key: key);
+  const TechSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Info hardcoded for tech skills based on implementation plan
+    // Info for tech skills based on implementation plan
     final techCategories = [
-      {'area': 'Lenguajes', 'techs': ['Python', 'Java', 'Node.js', 'Dart', 'C++']},
-      {'area': 'Frameworks', 'techs': ['FastAPI', 'Spring Boot', 'Express', 'Dart Frog', 'Flutter']},
-      {'area': 'Bases de datos', 'techs': ['PostgreSQL', 'MySQL', 'MongoDB', 'Firebase']},
-      {'area': 'Contenedores', 'techs': ['Docker', 'Docker Compose']},
-      {'area': 'Cloud', 'techs': ['AWS (EC2, RDS, Lambda, S3)', 'Azure']},
-      {'area': 'VPS', 'techs': ['DigitalOcean', 'InterServer', 'Contabo', 'Hostinger']},
-      {'area': 'APIs', 'techs': ['REST', 'GraphQL', 'WebSockets']},
-      {'area': 'Testing', 'techs': ['Pytest', 'JUnit', 'Postman']},
-      {'area': 'Monitoreo', 'techs': ['Prometheus', 'Grafana']},
+      {
+        'area': 'Lenguajes',
+        'techs': ['Dart', 'TypeScript', 'JavaScript', 'Python', 'Java', 'C++'],
+      },
+      {
+        'area': 'Frameworks',
+        'techs': ['Flutter', 'Dart Frog', 'FastAPI', 'Spring Boot', 'Express'],
+      },
+      {
+        'area': 'Bases de datos',
+        'techs': ['PostgreSQL', 'MySQL', 'MongoDB', 'Firebase'],
+      },
+      {
+        'area': 'Contenedores',
+        'techs': ['Docker', 'Docker Compose'],
+      },
+      {
+        'area': 'Cloud',
+        'techs': ['AWS (EC2, RDS, Lambda, S3)', 'Azure'],
+      },
+      {
+        'area': 'VPS',
+        'techs': ['DigitalOcean', 'InterServer', 'Contabo', 'Hostinger'],
+      },
+      {
+        'area': 'APIs',
+        'techs': ['REST', 'GraphQL', 'WebSockets'],
+      },
+      {
+        'area': 'Testing',
+        'techs': ['Tests Unitarios', 'Pytest', 'JUnit', 'Postman'],
+      },
+      {
+        'area': 'Monitoreo',
+        'techs': ['Prometheus', 'Grafana'],
+      },
     ];
 
     return Column(
@@ -70,8 +97,8 @@ class _TechCategoryCardState extends State<_TechCategoryCard> {
           padding: const EdgeInsets.all(24),
           customBorder: Border.all(
             color: isHovered 
-              ? AppColors.accentPrimary.withOpacity(0.5) 
-              : Colors.white.withOpacity(0.1),
+              ? AppColors.accentPrimary.withValues(alpha: 0.5) 
+              : Colors.white.withValues(alpha: 0.1),
             width: 1,
           ),
           child: Column(
@@ -107,9 +134,9 @@ class _TechChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.accentPrimary.withOpacity(0.1),
+        color: AppColors.accentPrimary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: AppColors.accentPrimary.withOpacity(0.3)),
+        border: Border.all(color: AppColors.accentPrimary.withValues(alpha: 0.3)),
       ),
       child: Text(
         text,

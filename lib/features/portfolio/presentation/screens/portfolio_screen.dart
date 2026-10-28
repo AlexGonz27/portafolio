@@ -29,7 +29,6 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   ui.Picture? _planetBodyPicture;
   ui.Picture? _planetRingsPicture;
   double _timeSeconds = 0.0;
-  double _scrollExtent = 3000.0;
 
   final GlobalKey _heroKey = GlobalKey();
   final GlobalKey _aboutKey = GlobalKey();
@@ -287,18 +286,6 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
-    // Evitar acceder a maxScrollExtent antes del primer layout para prevenir 'Unexpected null value'
-    if (_scrollController.hasClients &&
-        _scrollController.position.hasContentDimensions) {
-      _scrollExtent = _scrollController.position.maxScrollExtent;
-    }
-
-    final phaseController = ScrollPhaseController(
-      scrollOffset:
-          _scrollController.hasClients ? _scrollController.offset : 0.0,
-      maxScrollExtent: _scrollExtent > 0 ? _scrollExtent : 3000.0,
-    );
 
     return Scaffold(
       body: Stack(

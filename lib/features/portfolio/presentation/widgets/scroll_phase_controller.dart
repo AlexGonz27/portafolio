@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 enum CosmicPhase {
   /// Fase 1: (0% - 15%) Caos estelar puro en el Hero
   chaos,
