@@ -5,7 +5,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../widgets/star_particle.dart';
 import '../widgets/star_field_painter.dart';
-import '../widgets/scroll_phase_controller.dart';
 import '../widgets/hero_section.dart';
 import '../widgets/about_section.dart';
 import '../widgets/tech_section.dart';
@@ -20,12 +19,11 @@ class PortfolioScreen extends StatefulWidget {
 }
 
 class _PortfolioScreenState extends State<PortfolioScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
   late AnimationController _tickerController;
-  late AnimationController _formationController;
 
-  List<StarParticle> _particles = [];
+  List<StarParticle> _backgroundParticles = [];
   ui.Picture? _planetBodyPicture;
   ui.Picture? _planetRingsPicture;
   double _timeSeconds = 0.0;
@@ -81,56 +79,59 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     _tickerController = AnimationController(
       vsync: this,
-      duration: const Duration(
-        seconds: 10,
-      ), // Usamos el ticker para repinte constante
+      duration: const Duration(seconds: 10),
     )..repeat();
 
     _tickerController.addListener(() {
-      // Incremento constante acumulativo para evitar el 'salto' al reiniciar el ciclo
       _timeSeconds += 0.016;
     });
-
-    // Saturno siempre formado desde el inicio
-    _formationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-      value: 1.0,
-    );
 
     _scrollController.addListener(_onScroll);
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_particles.isEmpty) {
-      _initParticles(MediaQuery.of(context).size);
-      _bakePlanetLayers();
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (!_tickerController.isAnimating) {
+        _tickerController.repeat();
+      }
+    } else {
+      if (_tickerController.isAnimating) {
+        _tickerController.stop();
+      }
     }
   }
 
-  void _bakePlanetLayers() {
-    // 1. Hornear el CUERPO
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_backgroundParticles.isEmpty) {
+      _initCosmicScene(MediaQuery.of(context).size);
+    }
+  }
+
+  void _bakePlanetLayers(List<StarParticle> planetParticles) {
+    // 1. Hornear el CUERPO de Saturno con máxima fidelidad
     final bodyRecorder = ui.PictureRecorder();
     final bodyCanvas = Canvas(bodyRecorder);
     final paint = Paint()..style = PaintingStyle.fill;
 
-    for (var p in _particles) {
+    for (var p in planetParticles) {
       if (p.isPlanet && !p.isRing) {
         _drawFidelityParticle(bodyCanvas, p, paint);
       }
     }
     _planetBodyPicture = bodyRecorder.endRecording();
 
-    // 2. Hornear los ANILLOS
+    // 2. Hornear los ANILLOS de Saturno con máxima fidelidad
     final ringsRecorder = ui.PictureRecorder();
     final ringsCanvas = Canvas(ringsRecorder);
 
-    for (var p in _particles) {
+    for (var p in planetParticles) {
       if (p.isRing) {
         _drawFidelityParticle(ringsCanvas, p, paint);
       }
@@ -164,8 +165,6 @@ class _PortfolioScreenState extends State<PortfolioScreen>
       canvas.translate(pos.dx, pos.dy);
       canvas.rotate(p.rotationAngle);
       
-      // Usamos el mismo generador de paths (que ahora tiene cache en el pintor)
-      // O podemos implementar una versión simple aquí para el bake inicial
       Path starPath = _getStarPath(p.starType, p.size);
       canvas.drawPath(starPath, paint);
       canvas.restore();
@@ -205,7 +204,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     return path;
   }
 
-  void _initParticles(Size size) {
+  void _initCosmicScene(Size size) {
     Random r = Random();
     int numGroups = 8;
     int totalStars = 1200;
@@ -213,7 +212,10 @@ class _PortfolioScreenState extends State<PortfolioScreen>
 
     double bodyRadius = 138.0;
 
-    _particles = List.generate(totalStars, (index) {
+    List<StarParticle> planetParticles = [];
+    _backgroundParticles = [];
+
+    for (int index = 0; index < totalStars; index++) {
       bool isPlanet = index < planetStarsCount;
       bool isRing = isPlanet && index >= 300;
 
@@ -250,7 +252,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
         }
       }
 
-      return StarParticle(
+      final particle = StarParticle(
         origin: origin,
         size: pSize,
         baseOpacity: r.nextDouble() * 0.6 + 0.4,
@@ -268,13 +270,21 @@ class _PortfolioScreenState extends State<PortfolioScreen>
         planetAngle: planetAngle,
         particleColor: pColor,
       );
-    });
+
+      if (isPlanet) {
+        planetParticles.add(particle);
+      } else {
+        _backgroundParticles.add(particle);
+      }
+    }
+
+    _bakePlanetLayers(planetParticles);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tickerController.dispose();
-    _formationController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _activeSectionNotifier.dispose();
@@ -290,33 +300,78 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Fondo cósmico animado
+          // 1. Fondo cósmico animado (solo estrellas de fondo, ligero para la CPU)
           Positioned.fill(
             child: RepaintBoundary(
               child: AnimatedBuilder(
-                animation: Listenable.merge([_tickerController, _scrollController]),
+                animation: _tickerController,
                 builder: (context, _) {
-                  final phaseController = ScrollPhaseController(
-                    scrollOffset: _scrollController.hasClients ? _scrollController.offset : 0.0,
-                    maxScrollExtent: _scrollController.hasClients && _scrollController.position.hasContentDimensions 
-                        ? _scrollController.position.maxScrollExtent 
-                        : 3000.0,
-                  );
                   return CustomPaint(
                     painter: StarFieldPainter(
-                      particles: _particles,
-                      phaseController: phaseController,
+                      particles: _backgroundParticles,
                       timeSeconds: _timeSeconds,
                       screenSize: size,
-                      formationOverride: 1.0,
-                      planetBodyPicture: _planetBodyPicture,
-                      planetRingsPicture: _planetRingsPicture,
                     ),
                   );
                 },
               ),
             ),
           ),
+
+          // 2. Saturno (Capa independiente en GPU - Hardware Compositing con 100% nitidez)
+          if (_planetBodyPicture != null && _planetRingsPicture != null)
+            Positioned(
+              left: size.width * 0.82 - 350,
+              top: size.height * 0.50 - 350,
+              width: 700,
+              height: 700,
+              child: IgnorePointer(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Cuerpo de Saturno (rotación pura de GPU sin repintar canvas)
+                    AnimatedBuilder(
+                      animation: _tickerController,
+                      builder: (context, child) {
+                        return Transform.rotate(
+                          angle: _timeSeconds * 0.15,
+                          child: child,
+                        );
+                      },
+                      child: RepaintBoundary(
+                        child: CustomPaint(
+                          size: const Size(700, 700),
+                          painter: SaturnPicturePainter(_planetBodyPicture),
+                        ),
+                      ),
+                    ),
+
+                    // Anillos de Saturno (perspectiva elíptica + rotación en GPU)
+                    Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()
+                        ..rotateZ(0.20)
+                        ..scale(1.0, 0.32, 1.0),
+                      child: AnimatedBuilder(
+                        animation: _tickerController,
+                        builder: (context, child) {
+                          return Transform.rotate(
+                            angle: _timeSeconds * 0.3,
+                            child: child,
+                          );
+                        },
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            size: const Size(700, 700),
+                            painter: SaturnPicturePainter(_planetRingsPicture),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           // 2. Contenido scrolleable
           SingleChildScrollView(
