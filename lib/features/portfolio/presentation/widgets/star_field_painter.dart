@@ -5,11 +5,12 @@ import '../../../../core/theme/app_colors.dart';
 import 'star_particle.dart';
 
 /// Pintor para las estrellas titilantes y flotantes de fondo.
-/// Solo itera sobre las estrellas del cosmos profundo, sin sobrecargar la CPU con Saturno.
+/// Solo itera sobre las estrellas del cosmos profundo, adaptándose a Dark y Light mode.
 class StarFieldPainter extends CustomPainter {
   final List<StarParticle> particles;
   final double timeSeconds;
   final Size screenSize;
+  final bool isDark;
 
   // Cache de Paths para evitar crearlos repetidamente
   static final Map<int, Path> _starPathCache = {};
@@ -18,6 +19,7 @@ class StarFieldPainter extends CustomPainter {
     required this.particles,
     required this.timeSeconds,
     required this.screenSize,
+    this.isDark = true,
   });
 
   @override
@@ -42,16 +44,19 @@ class StarFieldPainter extends CustomPainter {
     double currentOpacity = particle.currentOpacity(timeSeconds);
     if (currentOpacity < 0.1) return;
 
+    final starCoreColor = isDark ? AppColors.starCore : AppColors.starCoreLight;
+    final glowColor = isDark ? particle.particleColor : particle.lightParticleColor;
+
     // Resplandor / Glow con blur para estrellas grandes
     if (particle.hasGlow && particle.size > 3.0) {
       final glowPaint = Paint()
         ..style = PaintingStyle.fill
-        ..color = particle.particleColor.withOpacity(currentOpacity * 0.3)
+        ..color = glowColor.withValues(alpha: currentOpacity * (isDark ? 0.3 : 0.25))
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
       canvas.drawCircle(particle.position, particle.size * 1.2, glowPaint);
     }
 
-    paint.color = AppColors.starCore.withOpacity(0.8 * currentOpacity);
+    paint.color = starCoreColor.withValues(alpha: (isDark ? 0.8 : 0.75) * currentOpacity);
 
     // Formas complejas de estrella (★ ✦ ✧) para estrellas grandes (> 3.0px)
     if (particle.size > 3.0) {
@@ -111,14 +116,13 @@ class StarFieldPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant StarFieldPainter oldDelegate) {
     return oldDelegate.timeSeconds != timeSeconds ||
-        oldDelegate.screenSize != screenSize;
+        oldDelegate.screenSize != screenSize ||
+        oldDelegate.isDark != isDark;
   }
 }
 
 /// Pintor ultra-eficiente para Saturno:
 /// Se dibuja exactamente UNA VEZ en su propio RepaintBoundary.
-/// Toda la rotación de Saturno es ejecutada directamente por el compositor de la GPU
-/// (sin repintar canvas ni calcular matemáticas en CPU).
 class SaturnPicturePainter extends CustomPainter {
   final Picture? picture;
 

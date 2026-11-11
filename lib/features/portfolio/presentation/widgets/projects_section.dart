@@ -35,7 +35,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
         Text(
           "Selección de proyectos en producción y desarrollos de software reales con foco en arquitectura, rendimiento y soluciones prácticas.",
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textSecondary,
+                color: context.textSecondary,
               ),
         ),
         const SizedBox(height: 32),
@@ -77,7 +77,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
         "name": "Plataforma Lectoescritura",
         "category": "EdTech / Offline AI",
         "tag": "Desarrollo",
-        "tagColor": AppColors.accentSecondary,
+        "tagColor": context.accentSecondary,
         "icon": Icons.school_rounded,
       },
       {
@@ -142,6 +142,9 @@ class _ProjectsSectionState extends State<ProjectsSection> {
     required IconData icon,
     required bool isSelected,
   }) {
+    final isDark = context.isDark;
+    final accentPrimary = context.accentPrimary;
+
     return InkWell(
       onTap: () => setState(() => _selectedProjectIndex = index),
       borderRadius: BorderRadius.circular(12),
@@ -149,13 +152,13 @@ class _ProjectsSectionState extends State<ProjectsSection> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.accentPrimary.withValues(alpha: 0.15)
-              : Colors.white.withValues(alpha: 0.03),
+              ? accentPrimary.withValues(alpha: 0.15)
+              : (isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFF0F172A).withValues(alpha: 0.03)),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? AppColors.accentPrimary.withValues(alpha: 0.6)
-                : Colors.white.withValues(alpha: 0.08),
+                ? accentPrimary.withValues(alpha: 0.6)
+                : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFF0F172A).withValues(alpha: 0.08)),
           ),
         ),
         child: Row(
@@ -164,14 +167,14 @@ class _ProjectsSectionState extends State<ProjectsSection> {
             Icon(
               icon,
               size: 18,
-              color: isSelected ? AppColors.accentPrimary : AppColors.textSecondary,
+              color: isSelected ? accentPrimary : context.textSecondary,
             ),
             const SizedBox(width: 8),
             Text(
               title,
               style: TextStyle(
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                color: isSelected ? context.textPrimary : context.textSecondary,
                 fontSize: 13,
               ),
             ),
@@ -206,6 +209,9 @@ class _ProjectsSectionState extends State<ProjectsSection> {
     required IconData icon,
     required bool isSelected,
   }) {
+    final isDark = context.isDark;
+    final accentPrimary = context.accentPrimary;
+
     return InkWell(
       onTap: () => setState(() => _selectedProjectIndex = index),
       borderRadius: BorderRadius.circular(14),
@@ -214,13 +220,13 @@ class _ProjectsSectionState extends State<ProjectsSection> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.accentPrimary.withValues(alpha: 0.12)
-              : Colors.white.withValues(alpha: 0.02),
+              ? accentPrimary.withValues(alpha: 0.12)
+              : (isDark ? Colors.white.withValues(alpha: 0.02) : const Color(0xFF0F172A).withValues(alpha: 0.03)),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
-                ? AppColors.accentPrimary.withValues(alpha: 0.6)
-                : Colors.white.withValues(alpha: 0.08),
+                ? accentPrimary.withValues(alpha: 0.6)
+                : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFF0F172A).withValues(alpha: 0.08)),
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -230,14 +236,14 @@ class _ProjectsSectionState extends State<ProjectsSection> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.accentPrimary.withValues(alpha: 0.2)
-                    : Colors.white.withValues(alpha: 0.05),
+                    ? accentPrimary.withValues(alpha: 0.2)
+                    : (isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFF0F172A).withValues(alpha: 0.05)),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
                 icon,
                 size: 20,
-                color: isSelected ? AppColors.accentPrimary : AppColors.textSecondary,
+                color: isSelected ? accentPrimary : context.textSecondary,
               ),
             ),
             const SizedBox(width: 12),
@@ -254,7 +260,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                            color: isSelected ? context.textPrimary : context.textSecondary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -284,8 +290,8 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                     style: TextStyle(
                       fontSize: 11,
                       color: isSelected
-                          ? AppColors.accentPrimary.withValues(alpha: 0.8)
-                          : Colors.white38,
+                          ? accentPrimary.withValues(alpha: 0.8)
+                          : (isDark ? Colors.white38 : context.textSecondary.withValues(alpha: 0.6)),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -315,12 +321,15 @@ class _ProjectsSectionState extends State<ProjectsSection> {
   // 1. KAMSIS PROJECT CARD
   // ==========================================
   Widget _buildKamsisCard(BuildContext context, bool isMobile) {
+    final accentPrimary = context.accentPrimary;
+    final accentSecondary = context.accentSecondary;
+
     return GlassmorphismCard(
       padding: EdgeInsets.all(isMobile ? 24.0 : 36.0),
       blur: 20,
       opacity: 0.08,
       customBorder: Border.all(
-        color: AppColors.accentPrimary.withValues(alpha: 0.35),
+        color: accentPrimary.withValues(alpha: 0.35),
         width: 1.2,
       ),
       child: Column(
@@ -343,11 +352,11 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                     ),
                     _buildPillTag(
                       "PROPTECH / FINTECH",
-                      AppColors.accentSecondary,
+                      accentSecondary,
                     ),
                     _buildPillTag(
                       "FULL-STACK DART",
-                      AppColors.accentPrimary,
+                      accentPrimary,
                     ),
                   ],
                 ),
@@ -357,12 +366,12 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                 icon: const Icon(Icons.open_in_new_rounded, size: 16),
                 label: const Text("Visitar kamsis.online"),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentPrimary.withValues(alpha: 0.15),
-                  foregroundColor: AppColors.accentPrimary,
+                  backgroundColor: accentPrimary.withValues(alpha: 0.15),
+                  foregroundColor: accentPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                     side: BorderSide(
-                      color: AppColors.accentPrimary.withValues(alpha: 0.5),
+                      color: accentPrimary.withValues(alpha: 0.5),
                     ),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -379,12 +388,12 @@ class _ProjectsSectionState extends State<ProjectsSection> {
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.5,
-                  color: AppColors.textPrimary,
+                  color: context.textPrimary,
                 ),
           ),
           const SizedBox(height: 6),
           ShaderMask(
-            shaderCallback: (bounds) => AppColors.cyanGradient.createShader(bounds),
+            shaderCallback: (bounds) => context.cyanGradient.createShader(bounds),
             child: Text(
               "Sistema Integral de Gestión y Administración Fiduciaria de Condominios",
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -401,7 +410,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
             "Plataforma modular de misión crítica desarrollada para resolver la problemática contable y administrativa de condominios en economías bimonetarias. Automatiza la emisión de avisos de cobro, conciliación de pagos multimoneda y consulta en tiempo real para propietarios y administradores.",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   height: 1.6,
-                  color: AppColors.textSecondary,
+                  color: context.textSecondary,
                 ),
           ),
 
@@ -465,12 +474,16 @@ class _ProjectsSectionState extends State<ProjectsSection> {
   // 2. APP INFANTIL (LECTOESCRITURA)
   // ==========================================
   Widget _buildAppInfantilCard(BuildContext context, bool isMobile) {
+    final isDark = context.isDark;
+    final accentPrimary = context.accentPrimary;
+    final accentSecondary = context.accentSecondary;
+
     return GlassmorphismCard(
       padding: EdgeInsets.all(isMobile ? 24.0 : 36.0),
       blur: 20,
       opacity: 0.08,
       customBorder: Border.all(
-        color: AppColors.accentSecondary.withValues(alpha: 0.35),
+        color: accentSecondary.withValues(alpha: 0.35),
         width: 1.2,
       ),
       child: Column(
@@ -488,12 +501,12 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                   children: [
                     _buildPillTag(
                       "DESARROLLO MÓVIL",
-                      AppColors.accentSecondary,
+                      accentSecondary,
                       isFilled: true,
                     ),
                     _buildPillTag(
                       "EDTECH / EDUCACIÓN",
-                      AppColors.accentPrimary,
+                      accentPrimary,
                     ),
                     _buildPillTag(
                       "OFFLINE-FIRST",
@@ -505,20 +518,20 @@ class _ProjectsSectionState extends State<ProjectsSection> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFF0F172A).withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFF0F172A).withValues(alpha: 0.08)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.code_rounded, size: 14, color: AppColors.textSecondary),
-                    SizedBox(width: 6),
+                  children: [
+                    Icon(Icons.code_rounded, size: 14, color: context.textSecondary),
+                    const SizedBox(width: 6),
                     Text(
                       "Apoyo en Desarrollo",
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textSecondary,
+                        color: context.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -536,12 +549,12 @@ class _ProjectsSectionState extends State<ProjectsSection> {
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.5,
-                  color: AppColors.textPrimary,
+                  color: context.textPrimary,
                 ),
           ),
           const SizedBox(height: 6),
           ShaderMask(
-            shaderCallback: (bounds) => AppColors.purpleGradient.createShader(bounds),
+            shaderCallback: (bounds) => context.purpleGradient.createShader(bounds),
             child: Text(
               "Aplicación Móvil Interactiva para Aprendizaje Infantil con Guía por Voz e Inferencia ONNX",
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -558,7 +571,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
             "Proyecto de innovación educativa orientado a la enseñanza y refuerzo de lectoescritura en niños mediante un avatar interactivo y gamificación. Mi participación consistió en apoyar en el desarrollo de la aplicación móvil en Flutter, implementando la lógica de funcionamiento offline-first, módulos de trazado interactivo y soporte de audio local.",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   height: 1.6,
-                  color: AppColors.textSecondary,
+                  color: context.textSecondary,
                 ),
           ),
 
@@ -622,6 +635,10 @@ class _ProjectsSectionState extends State<ProjectsSection> {
   // 3. PLAYLOT (APP MÓVIL TAQUILLA)
   // ==========================================
   Widget _buildPlayLotCard(BuildContext context, bool isMobile) {
+    final isDark = context.isDark;
+    final accentPrimary = context.accentPrimary;
+    final accentSecondary = context.accentSecondary;
+
     return GlassmorphismCard(
       padding: EdgeInsets.all(isMobile ? 24.0 : 36.0),
       blur: 20,
@@ -650,11 +667,11 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                     ),
                     _buildPillTag(
                       "PUNTO DE VENTA (POS)",
-                      AppColors.accentPrimary,
+                      accentPrimary,
                     ),
                     _buildPillTag(
                       "INTEGRACIÓN WEB API",
-                      AppColors.accentSecondary,
+                      accentSecondary,
                     ),
                   ],
                 ),
@@ -662,20 +679,20 @@ class _ProjectsSectionState extends State<ProjectsSection> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFF0F172A).withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFF0F172A).withValues(alpha: 0.08)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.handshake_outlined, size: 14, color: AppColors.textSecondary),
-                    SizedBox(width: 6),
+                  children: [
+                    Icon(Icons.handshake_outlined, size: 14, color: context.textSecondary),
+                    const SizedBox(width: 6),
                     Text(
                       "Desarrollo de App Cliente",
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textSecondary,
+                        color: context.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -693,7 +710,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.5,
-                  color: AppColors.textPrimary,
+                  color: context.textPrimary,
                 ),
           ),
           const SizedBox(height: 6),
@@ -717,7 +734,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
             "PlayLot es un sistema comercial que cuenta con su plataforma web central de administración. Mi labor se centró específicamente en el desarrollo de la aplicación cliente en Flutter (Android), creando la interfaz y flujo de trabajo para operadores de taquilla, emisión ágil de tickets e integración directa con las APIs del sistema web.",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   height: 1.6,
-                  color: AppColors.textSecondary,
+                  color: context.textSecondary,
                 ),
           ),
 
@@ -824,17 +841,19 @@ class _ProjectsSectionState extends State<ProjectsSection> {
   }
 
   Widget _buildHighlightRow(BuildContext context, _HighlightItem item) {
+    final isDark = context.isDark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.025),
+        color: isDark ? Colors.white.withValues(alpha: 0.025) : const Color(0xFF0F172A).withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFF0F172A).withValues(alpha: 0.06)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(item.icon, size: 18, color: AppColors.accentPrimary),
+          Icon(item.icon, size: 18, color: context.accentPrimary),
           const SizedBox(width: 10),
           Expanded(
             child: RichText(
@@ -846,14 +865,14 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                 children: [
                   TextSpan(
                     text: "${item.title} ",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: context.textPrimary,
                     ),
                   ),
                   TextSpan(
                     text: item.description,
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: context.textSecondary),
                   ),
                 ],
               ),
@@ -883,9 +902,9 @@ class _ProjectsSectionState extends State<ProjectsSection> {
         ),
         Text(
           "${_selectedProjectIndex + 1} de ${titles.length}",
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: AppColors.textSecondary,
+            color: context.textSecondary,
             fontFamily: 'FiraCode',
           ),
         ),
@@ -948,19 +967,21 @@ class _ProjectTechChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: isDark ? Colors.white.withValues(alpha: 0.04) : const Color(0xFF0F172A).withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: AppColors.accentPrimary.withValues(alpha: 0.25),
+          color: context.accentPrimary.withValues(alpha: 0.25),
         ),
       ),
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.textPrimary,
+              color: context.textPrimary,
               fontSize: 11,
             ),
       ),

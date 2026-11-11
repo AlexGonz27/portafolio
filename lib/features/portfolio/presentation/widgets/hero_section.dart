@@ -12,7 +12,6 @@ class HeroSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ... resto del build ...
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
@@ -31,7 +30,7 @@ class HeroSection extends StatelessWidget {
             Text(
               "Hola, soy",
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppColors.accentPrimary,
+                color: context.accentPrimary,
               ),
             ).animate().fade(duration: 800.ms).slideY(begin: 0.5, end: 0),
             
@@ -50,9 +49,9 @@ class HeroSection extends StatelessWidget {
             
             const SizedBox(height: 8),
             
-            // Título
+            // Título con gradiente dinámico
             ShaderMask(
-              shaderCallback: (bounds) => AppColors.cyanGradient.createShader(bounds),
+              shaderCallback: (bounds) => context.cyanGradient.createShader(bounds),
               child: Text(
                 "Desarrollador de Software",
                 style: isMobile 

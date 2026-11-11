@@ -21,7 +21,7 @@ class ContactSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const SizedBox(
-          width: 800, // Limitar ancho del header en el centro
+          width: 800,
           child: SectionHeader(number: "04.", title: "¿Hablamos?"),
         ),
 
@@ -47,9 +47,7 @@ class ContactSection extends StatelessWidget {
               onTap: () => _launchUrl(AppConstants.whatsappUrl),
             ),
             _ContactButton(
-              icon:
-                  Icons
-                      .code, // Placeholder for Github since Icons doesn't have it built-in easily
+              icon: Icons.code,
               label: "GitHub",
               value: "AlexGonz27",
               onTap: () => _launchUrl(AppConstants.githubUrl),
@@ -68,15 +66,15 @@ class ContactSection extends StatelessWidget {
         // Branding del pie de página
         Text(
           "Diseñado y construido por Alexander A. Gonzalez A.",
-          style: Theme.of(
-            context,
-          ).textTheme.labelMedium?.copyWith(color: AppColors.textSecondary),
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: context.textSecondary,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           "2026",
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: AppColors.textSecondary.withOpacity(0.5),
+            color: context.textSecondary.withValues(alpha: 0.5),
           ),
         ),
       ],
@@ -106,6 +104,9 @@ class _ContactButtonState extends State<_ContactButton> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDark;
+    final accentPrimary = context.accentPrimary;
+
     return MouseRegion(
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
@@ -117,10 +118,9 @@ class _ContactButtonState extends State<_ContactButton> {
           child: GlassmorphismCard(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
             customBorder: Border.all(
-              color:
-                  isHovered
-                      ? AppColors.accentPrimary.withOpacity(0.5)
-                      : Colors.white.withOpacity(0.1),
+              color: isHovered
+                  ? accentPrimary.withValues(alpha: 0.5)
+                  : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFF0F172A).withValues(alpha: 0.08)),
               width: 1,
             ),
             child: Column(
@@ -128,30 +128,27 @@ class _ContactButtonState extends State<_ContactButton> {
                 Icon(
                   widget.icon,
                   size: 32,
-                  color:
-                      isHovered
-                          ? AppColors.accentPrimary
-                          : AppColors.textSecondary,
+                  color: isHovered
+                      ? accentPrimary
+                      : context.textSecondary,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   widget.label,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color:
-                        isHovered
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
+                    color: isHovered
+                        ? context.textPrimary
+                        : context.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   widget.value,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color:
-                        isHovered
-                            ? AppColors.accentPrimary
-                            : AppColors.textSecondary,
+                    color: isHovered
+                        ? accentPrimary
+                        : context.textSecondary,
                   ),
                 ),
               ],

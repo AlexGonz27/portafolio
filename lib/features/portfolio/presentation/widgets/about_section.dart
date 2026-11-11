@@ -10,10 +10,13 @@ class AboutSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 768;
+    final isDark = context.isDark;
+    final accentPrimary = context.accentPrimary;
+    final accentSecondary = context.accentSecondary;
 
     return Align(
       alignment: Alignment.centerLeft,
-      child: Container(
+      child: SizedBox(
         width: isMobile ? double.infinity : screenWidth * 0.65,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,16 +38,16 @@ class AboutSection extends StatelessWidget {
                         RichText(
                           text: TextSpan(
                             style: Theme.of(context).textTheme.bodyLarge,
-                            children: const [
-                              TextSpan(text: "Soy un "),
+                            children: [
+                              const TextSpan(text: "Soy un "),
                               TextSpan(
                                 text: "Desarrollador de Software",
-                                style: TextStyle(color: AppColors.accentPrimary, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: accentPrimary, fontWeight: FontWeight.bold),
                               ),
-                              TextSpan(text: " apasionado por crear soluciones tecnológicas robustas. "),
-                              TextSpan(text: "Actualmente este espacio se encuentra en construcción, pero aquí detallaré mi trayectoria profesional, mis pasiones enfocadas en el ecosistema backend y arquitecturas eficientes, y mi enfoque para resolver problemas complejos.\n\n"),
+                              const TextSpan(text: " apasionado por crear soluciones tecnológicas robustas. "),
+                              const TextSpan(text: "Actualmente este espacio se encuentra en construcción, pero aquí detallaré mi trayectoria profesional, mis pasiones enfocadas en el ecosistema backend y arquitecturas eficientes, y mi enfoque para resolver problemas complejos.\n\n"),
                               
-                              TextSpan(text: "Me gusta trabajar en la constante evolución tecnológica, abarcando desde desarrollo de APIs rápidas hasta interfaces de usuario fluidas preparadas para escala."),
+                              const TextSpan(text: "Me gusta trabajar en la constante evolución tecnológica, abarcando desde desarrollo de APIs rápidas hasta interfaces de usuario fluidas preparadas para escala."),
                             ],
                           ),
                         ),
@@ -55,7 +58,7 @@ class AboutSection extends StatelessWidget {
                   if (!isMobile) const SizedBox(width: 60),
                   if (isMobile) const SizedBox(height: 40),
                   
-                  // Avatar / Foto con marco cósmico y resplandor
+                  // Avatar / Foto con marco cósmico y resplandor adaptativo
                   Expanded(
                     flex: isMobile ? 0 : 2,
                     child: Center(
@@ -66,30 +69,30 @@ class AboutSection extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.accentPrimary.withOpacity(0.25),
+                              color: accentPrimary.withValues(alpha: isDark ? 0.25 : 0.2),
                               blurRadius: 35,
                               spreadRadius: 5,
                             ),
                             BoxShadow(
-                              color: AppColors.accentSecondary.withOpacity(0.18),
+                              color: accentSecondary.withValues(alpha: isDark ? 0.18 : 0.15),
                               blurRadius: 55,
                               spreadRadius: 8,
                             ),
                           ],
-                          gradient: const SweepGradient(
+                          gradient: SweepGradient(
                             colors: [
-                              AppColors.accentPrimary,
-                              AppColors.accentSecondary,
-                              Color(0xFF00B4D8),
-                              AppColors.accentPrimary,
+                              accentPrimary,
+                              accentSecondary,
+                              isDark ? const Color(0xFF00B4D8) : const Color(0xFF0369A1),
+                              accentPrimary,
                             ],
                           ),
                         ),
                         padding: const EdgeInsets.all(3.5),
                         child: Container(
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.background,
+                            color: context.appBackground,
                           ),
                           padding: const EdgeInsets.all(4),
                           child: ClipOval(
@@ -101,7 +104,7 @@ class AboutSection extends StatelessWidget {
                                 child: Icon(
                                   Icons.person_outline,
                                   size: 80,
-                                  color: AppColors.accentPrimary.withOpacity(0.8),
+                                  color: accentPrimary.withValues(alpha: 0.8),
                                 ),
                               ),
                             ),

@@ -8,7 +8,6 @@ class TechSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Info for tech skills based on implementation plan
     final techCategories = [
       {
         'area': 'Lenguajes',
@@ -86,6 +85,9 @@ class _TechCategoryCardState extends State<_TechCategoryCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDark;
+    final accentPrimary = context.accentPrimary;
+
     return MouseRegion(
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
@@ -97,8 +99,8 @@ class _TechCategoryCardState extends State<_TechCategoryCard> {
           padding: const EdgeInsets.all(24),
           customBorder: Border.all(
             color: isHovered 
-              ? AppColors.accentPrimary.withValues(alpha: 0.5) 
-              : Colors.white.withValues(alpha: 0.1),
+              ? accentPrimary.withValues(alpha: 0.5) 
+              : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFF0F172A).withValues(alpha: 0.08)),
             width: 1,
           ),
           child: Column(
@@ -108,7 +110,7 @@ class _TechCategoryCardState extends State<_TechCategoryCard> {
               Text(
                 widget.title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: isHovered ? AppColors.accentPrimary : AppColors.textPrimary,
+                  color: isHovered ? accentPrimary : context.textPrimary,
                 ),
               ),
               const SizedBox(height: 16),
@@ -131,16 +133,21 @@ class _TechChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDark;
+    final accentPrimary = context.accentPrimary;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.accentPrimary.withValues(alpha: 0.1),
+        color: accentPrimary.withValues(alpha: isDark ? 0.1 : 0.08),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: AppColors.accentPrimary.withValues(alpha: 0.3)),
+        border: Border.all(color: accentPrimary.withValues(alpha: isDark ? 0.3 : 0.25)),
       ),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.labelMedium,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: accentPrimary,
+        ),
       ),
     );
   }

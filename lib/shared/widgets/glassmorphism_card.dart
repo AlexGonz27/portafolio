@@ -24,6 +24,8 @@ class GlassmorphismCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: margin,
       child: ClipRRect(
@@ -33,19 +35,27 @@ class GlassmorphismCard extends StatelessWidget {
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              color: AppColors.background.withOpacity(opacity),
+              color: isDark
+                  ? AppColors.background.withValues(alpha: opacity)
+                  : Colors.white.withValues(alpha: 0.75),
               borderRadius: BorderRadius.circular(borderRadius),
-              border: customBorder ?? Border.all(
-                color: Colors.white.withOpacity(0.12),
-                width: 1.0,
-              ),
+              border: customBorder ??
+                  Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.12)
+                        : const Color(0xFF0F172A).withValues(alpha: 0.08),
+                    width: 1.0,
+                  ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.1)
+                      : const Color(0xFF0F172A).withValues(alpha: 0.06),
                   blurRadius: 20,
-                  spreadRadius: -5,
+                  spreadRadius: isDark ? -5 : 0,
+                  offset: isDark ? Offset.zero : const Offset(0, 4),
                 )
-              ]
+              ],
             ),
             child: child,
           ),

@@ -13,6 +13,8 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = context.accentPrimary;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 40.0),
       child: Row(
@@ -21,7 +23,7 @@ class SectionHeader extends StatelessWidget {
           Text(
             number,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColors.accentPrimary,
+              color: accent,
               fontSize: 20,
             ),
           ),
@@ -37,7 +39,7 @@ class SectionHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.accentPrimary.withOpacity(0.5),
+                    accent.withValues(alpha: 0.5),
                     Colors.transparent,
                   ],
                 ),
