@@ -10,6 +10,7 @@ class StarFieldPainter extends CustomPainter {
   final List<StarParticle> particles;
   final double timeSeconds;
   final Size screenSize;
+  final bool isDark;
 
   // Cache de Paths para evitar crearlos repetidamente
   static final Map<int, Path> _starPathCache = {};
@@ -18,6 +19,7 @@ class StarFieldPainter extends CustomPainter {
     required this.particles,
     required this.timeSeconds,
     required this.screenSize,
+    this.isDark = true,
   });
 
   @override
@@ -46,12 +48,13 @@ class StarFieldPainter extends CustomPainter {
     if (particle.hasGlow && particle.size > 3.0) {
       final glowPaint = Paint()
         ..style = PaintingStyle.fill
-        ..color = particle.particleColor.withOpacity(currentOpacity * 0.3)
+        ..color = (isDark ? particle.particleColor : const Color(0xFF000000)).withOpacity(currentOpacity * 0.3)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
       canvas.drawCircle(particle.position, particle.size * 1.2, glowPaint);
     }
 
-    paint.color = AppColors.starCore.withOpacity(0.8 * currentOpacity);
+    final Color coreColor = isDark ? AppColors.starCore : const Color(0xFF000000);
+    paint.color = coreColor.withOpacity(0.8 * currentOpacity);
 
     // Formas complejas de estrella (★ ✦ ✧) para estrellas grandes (> 3.0px)
     if (particle.size > 3.0) {
@@ -111,7 +114,8 @@ class StarFieldPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant StarFieldPainter oldDelegate) {
     return oldDelegate.timeSeconds != timeSeconds ||
-        oldDelegate.screenSize != screenSize;
+        oldDelegate.screenSize != screenSize ||
+        oldDelegate.isDark != isDark;
   }
 }
 
