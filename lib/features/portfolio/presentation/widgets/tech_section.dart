@@ -140,7 +140,7 @@ class _TechChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: accentPrimary.withValues(alpha: isDark ? 0.1 : 0.08),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(2),
         border: Border.all(color: accentPrimary.withValues(alpha: isDark ? 0.3 : 0.25)),
       ),
       child: Text(

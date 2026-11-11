@@ -147,14 +147,14 @@ class _ProjectsSectionState extends State<ProjectsSection> {
 
     return InkWell(
       onTap: () => setState(() => _selectedProjectIndex = index),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(2),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
               ? accentPrimary.withValues(alpha: 0.15)
               : (isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFF0F172A).withValues(alpha: 0.03)),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(2),
           border: Border.all(
             color: isSelected
                 ? accentPrimary.withValues(alpha: 0.6)
@@ -183,7 +183,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: tagColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(2),
               ),
               child: Text(
                 tag,
@@ -214,7 +214,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
 
     return InkWell(
       onTap: () => setState(() => _selectedProjectIndex = index),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(2),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -222,7 +222,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
           color: isSelected
               ? accentPrimary.withValues(alpha: 0.12)
               : (isDark ? Colors.white.withValues(alpha: 0.02) : const Color(0xFF0F172A).withValues(alpha: 0.03)),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(2),
           border: Border.all(
             color: isSelected
                 ? accentPrimary.withValues(alpha: 0.6)
@@ -238,7 +238,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                 color: isSelected
                     ? accentPrimary.withValues(alpha: 0.2)
                     : (isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFF0F172A).withValues(alpha: 0.05)),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(2),
               ),
               child: Icon(
                 icon,
@@ -271,7 +271,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                         decoration: BoxDecoration(
                           color: tagColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                         child: Text(
                           tag,
@@ -369,7 +369,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                   backgroundColor: accentPrimary.withValues(alpha: 0.15),
                   foregroundColor: accentPrimary,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(2),
                     side: BorderSide(
                       color: accentPrimary.withValues(alpha: 0.5),
                     ),
@@ -519,7 +519,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFF0F172A).withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(2),
                   border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFF0F172A).withValues(alpha: 0.08)),
                 ),
                 child: Row(
@@ -680,7 +680,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFF0F172A).withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(2),
                   border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFF0F172A).withValues(alpha: 0.08)),
                 ),
                 child: Row(
@@ -847,7 +847,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.025) : const Color(0xFF0F172A).withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(2),
         border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFF0F172A).withValues(alpha: 0.06)),
       ),
       child: Row(
@@ -931,7 +931,7 @@ class _ProjectsSectionState extends State<ProjectsSection> {
         color: isFilled
             ? color.withValues(alpha: 0.18)
             : color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(2),
         border: Border.all(
           color: isFilled ? color.withValues(alpha: 0.6) : color.withValues(alpha: 0.3),
         ),
@@ -973,7 +973,7 @@ class _ProjectTechChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.04) : const Color(0xFF0F172A).withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(2),
         border: Border.all(
           color: context.accentPrimary.withValues(alpha: 0.25),
         ),

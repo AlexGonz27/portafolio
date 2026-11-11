@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import '../../../../app.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../widgets/star_particle.dart';
@@ -467,13 +466,6 @@ class _PortfolioScreenState extends State<PortfolioScreen>
                 );
               },
             ),
-
-          // 5. Botón Flotante para alternar entre Modo Claro y Oscuro
-          Positioned(
-            top: 24,
-            right: 28,
-            child: _ThemeToggleButton(isDark: isDark),
-          ),
         ],
       ),
     );
@@ -582,97 +574,6 @@ class _RotatingStarsIndicator extends StatelessWidget {
               spreadRadius: 1,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ThemeToggleButton extends StatefulWidget {
-  final bool isDark;
-
-  const _ThemeToggleButton({required this.isDark});
-
-  @override
-  State<_ThemeToggleButton> createState() => _ThemeToggleButtonState();
-}
-
-class _ThemeToggleButtonState extends State<_ThemeToggleButton> {
-  bool isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = widget.isDark;
-    final accent = context.accentPrimary;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => isHovered = true),
-      onExit: (_) => setState(() => isHovered = false),
-      child: Tooltip(
-        message: isDark ? "Activar Modo Claro" : "Activar Modo Oscuro",
-        child: GestureDetector(
-          onTap: () {
-            PortfolioApp.themeNotifier.value =
-                isDark ? ThemeMode.light : ThemeMode.dark;
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? (isHovered
-                      ? accent.withOpacity(0.18)
-                      : Colors.white.withOpacity(0.06))
-                  : (isHovered
-                      ? accent.withOpacity(0.15)
-                      : Colors.white.withOpacity(0.85)),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: isHovered
-                    ? accent.withOpacity(0.6)
-                    : (isDark
-                        ? Colors.white.withOpacity(0.15)
-                        : const Color(0xFF0F172A).withOpacity(0.12)),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isHovered
-                      ? accent.withOpacity(isDark ? 0.3 : 0.2)
-                      : (isDark ? Colors.black26 : const Color(0xFF0F172A).withOpacity(0.06)),
-                  blurRadius: isHovered ? 16 : 8,
-                  spreadRadius: isHovered ? 2 : 0,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedRotation(
-                  turns: isDark ? 0 : 0.5,
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeOutBack,
-                  child: Icon(
-                    isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                    size: 18,
-                    color: accent,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  isDark ? "CLARO" : "OSCURO",
-                  style: TextStyle(
-                    fontFamily: 'FiraCode',
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                    color: isDark ? Colors.white : AppColors.textPrimaryLight,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

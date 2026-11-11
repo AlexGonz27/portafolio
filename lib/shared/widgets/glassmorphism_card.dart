@@ -16,7 +16,7 @@ class GlassmorphismCard extends StatelessWidget {
     required this.child,
     this.blur = 15.0,
     this.opacity = 0.05,
-    this.borderRadius = 20.0,
+    this.borderRadius = 2.0,
     this.padding = const EdgeInsets.all(24.0),
     this.margin,
     this.customBorder,
