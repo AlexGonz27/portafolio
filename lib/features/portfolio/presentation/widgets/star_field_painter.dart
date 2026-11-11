@@ -10,7 +10,6 @@ class StarFieldPainter extends CustomPainter {
   final List<StarParticle> particles;
   final double timeSeconds;
   final Size screenSize;
-  final bool isDark;
 
   // Cache de Paths para evitar crearlos repetidamente
   static final Map<int, Path> _starPathCache = {};
@@ -19,7 +18,6 @@ class StarFieldPainter extends CustomPainter {
     required this.particles,
     required this.timeSeconds,
     required this.screenSize,
-    this.isDark = true,
   });
 
   @override
@@ -44,27 +42,24 @@ class StarFieldPainter extends CustomPainter {
     double currentOpacity = particle.currentOpacity(timeSeconds);
     if (currentOpacity < 0.1) return;
 
-    final Color glowColor = isDark ? particle.particleColor : const Color(0xFF000000);
-    final Color starColor = isDark ? AppColors.starCore : const Color(0xFF000000);
-
     // Resplandor / Glow con blur para estrellas grandes
-    if (particle.hasGlow && particle.size > 2.5) {
+    if (particle.hasGlow && particle.size > 3.0) {
       final glowPaint = Paint()
         ..style = PaintingStyle.fill
-        ..color = glowColor.withOpacity(currentOpacity * 0.3)
+        ..color = particle.particleColor.withOpacity(currentOpacity * 0.3)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
       canvas.drawCircle(particle.position, particle.size * 1.2, glowPaint);
     }
 
-    paint.color = starColor.withOpacity(0.8 * currentOpacity);
+    paint.color = AppColors.starCore.withOpacity(0.8 * currentOpacity);
 
-    // Formas de estrella (★ ✦ ✧)
-    if (particle.size > 2.0) {
+    // Formas complejas de estrella (★ ✦ ✧) para estrellas grandes (> 3.0px)
+    if (particle.size > 3.0) {
       canvas.save();
       canvas.translate(particle.position.dx, particle.position.dy);
       canvas.rotate(particle.rotationAngle);
 
-      Path starPath = _getStarPath(particle.starType, particle.size * 1.3);
+      Path starPath = _getStarPath(particle.starType, particle.size);
       canvas.drawPath(starPath, paint);
       canvas.restore();
     } else {
@@ -82,13 +77,13 @@ class StarFieldPainter extends CustomPainter {
     Path path;
     switch (type) {
       case 0:
-        path = _createStarPath(5, size, size * 0.38);
+        path = _createStarPath(5, size, size * 0.4);
         break;
       case 1:
-        path = _createStarPath(4, size * 1.25, size * 0.22);
+        path = _createStarPath(4, size * 1.2, size * 0.2);
         break;
       default:
-        path = _createStarPath(8, size * 1.0, size * 0.45);
+        path = _createStarPath(8, size * 0.9, size * 0.5);
         break;
     }
     _starPathCache[cacheKey] = path;
@@ -116,8 +111,7 @@ class StarFieldPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant StarFieldPainter oldDelegate) {
     return oldDelegate.timeSeconds != timeSeconds ||
-        oldDelegate.screenSize != screenSize ||
-        oldDelegate.isDark != isDark;
+        oldDelegate.screenSize != screenSize;
   }
 }
 

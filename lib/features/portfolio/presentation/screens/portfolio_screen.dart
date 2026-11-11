@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import '../../../../app.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../widgets/star_particle.dart';
@@ -25,11 +24,9 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   late AnimationController _tickerController;
 
   List<StarParticle> _backgroundParticles = [];
-  List<StarParticle> _planetParticles = [];
   ui.Picture? _planetBodyPicture;
   ui.Picture? _planetRingsPicture;
   double _timeSeconds = 0.0;
-  bool? _lastBakeIsDark;
 
   final GlobalKey _heroKey = GlobalKey();
   final GlobalKey _aboutKey = GlobalKey();
@@ -112,80 +109,67 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final size = MediaQuery.of(context).size;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     if (_backgroundParticles.isEmpty) {
-      _initCosmicScene(size, isDark: isDark);
-      _lastBakeIsDark = isDark;
-    } else if (_lastBakeIsDark != isDark) {
-      _bakePlanetLayers(_planetParticles, isDark: isDark);
-      _lastBakeIsDark = isDark;
+      _initCosmicScene(MediaQuery.of(context).size);
     }
   }
 
-  void _bakePlanetLayers(List<StarParticle> planetParticles, {required bool isDark}) {
-    // 1. Hornear el CUERPO de Saturno con máxima fidelidad en forma de ESTRELLAS (★ ✦ ✧)
+  void _bakePlanetLayers(List<StarParticle> planetParticles) {
+    // 1. Hornear el CUERPO de Saturno con máxima fidelidad
     final bodyRecorder = ui.PictureRecorder();
     final bodyCanvas = Canvas(bodyRecorder);
     final paint = Paint()..style = PaintingStyle.fill;
 
     for (var p in planetParticles) {
       if (p.isPlanet && !p.isRing) {
-        _drawFidelityParticle(bodyCanvas, p, paint, isDark: isDark);
+        _drawFidelityParticle(bodyCanvas, p, paint);
       }
     }
     _planetBodyPicture = bodyRecorder.endRecording();
 
-    // 2. Hornear los ANILLOS de Saturno como polvo estelar fino con color intensificado
+    // 2. Hornear los ANILLOS de Saturno con máxima fidelidad
     final ringsRecorder = ui.PictureRecorder();
     final ringsCanvas = Canvas(ringsRecorder);
 
     for (var p in planetParticles) {
       if (p.isRing) {
-        _drawFidelityParticle(ringsCanvas, p, paint, isDark: isDark);
+        _drawFidelityParticle(ringsCanvas, p, paint);
       }
     }
     _planetRingsPicture = ringsRecorder.endRecording();
-    _bakePathCache.clear();
+    _bakePathCache.clear(); // Limpiar cache tras el horneado
   }
 
-  void _drawFidelityParticle(Canvas canvas, StarParticle p, Paint paint, {required bool isDark}) {
+  void _drawFidelityParticle(Canvas canvas, StarParticle p, Paint paint) {
     if (p.planetRadius == null || p.planetAngle == null) return;
-    if (p.baseOpacity < 0.1) return;
+    if (p.baseOpacity < 0.1) return; // Saltar estrellas casi invisibles en el bake
     
     final pos = Offset(
       p.planetRadius! * cos(p.planetAngle!),
       p.planetRadius! * sin(p.planetAngle!),
     );
 
-    final glowColor = isDark ? p.particleColor : const Color(0xFF000000);
-    final coreColor = isDark ? AppColors.starCore : const Color(0xFF000000);
-
-    // Glow ultra-optimizado para el cuerpo de Saturno
-    if (p.hasGlow && p.size > 2.0) {
+    // Glow ultra-optimizado para el bake
+    if (p.hasGlow && p.size > 3.0) {
       final glowPaint = Paint()
         ..style = PaintingStyle.fill
-        ..color = glowColor.withOpacity(p.baseOpacity * 0.35)
+        ..color = p.particleColor.withOpacity(p.baseOpacity * 0.3)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
       canvas.drawCircle(pos, p.size * 1.2, glowPaint);
     }
 
-    if (p.isRing) {
-      // ANILLOS: Polvo estelar fino con color dorado/ámbar cálido intensificado
-      paint.color = (isDark ? p.particleColor : p.lightParticleColor).withOpacity(p.baseOpacity);
-      canvas.drawCircle(pos, p.size * 0.5, paint);
-    } else {
-      // CUERPO: SIEMPRE DIBUJAR COMO ESTRELLA VISIBLE (★ ✦ ✧)
-      paint.color = coreColor.withOpacity(p.baseOpacity);
-      
+    paint.color = AppColors.starCore.withOpacity(p.baseOpacity);
+    
+    if (p.size > 3.0) {
       canvas.save();
       canvas.translate(pos.dx, pos.dy);
       canvas.rotate(p.rotationAngle);
       
-      Path starPath = _getStarPath(p.starType, p.size * 1.35);
+      Path starPath = _getStarPath(p.starType, p.size);
       canvas.drawPath(starPath, paint);
       canvas.restore();
+    } else {
+      canvas.drawCircle(pos, p.size * 0.5, paint);
     }
   }
 
@@ -196,18 +180,11 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     int cacheKey = type * 1000 + (size * 10).toInt();
     if (_bakePathCache.containsKey(cacheKey)) return _bakePathCache[cacheKey]!;
     
-    Path path;
-    switch (type) {
-      case 0:
-        path = _createStarPath(5, size, size * 0.38); // 5 puntas nítidas
-        break;
-      case 1:
-        path = _createStarPath(4, size * 1.25, size * 0.22); // 4 puntas centelleo
-        break;
-      default:
-        path = _createStarPath(8, size * 1.0, size * 0.45); // 8 puntas cruz estelar
-        break;
-    }
+    Path path = _createStarPath(
+      type == 0 ? 5 : (type == 1 ? 4 : 8),
+      type == 1 ? size * 1.2 : (type == 0 ? size : size * 0.9),
+      type == 1 ? size * 0.2 : (type == 0 ? size * 0.4 : size * 0.5),
+    );
     _bakePathCache[cacheKey] = path;
     return path;
   }
@@ -227,7 +204,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     return path;
   }
 
-  void _initCosmicScene(Size size, {required bool isDark}) {
+  void _initCosmicScene(Size size) {
     Random r = Random();
     int numGroups = 8;
     int totalStars = 1200;
@@ -235,7 +212,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
 
     double bodyRadius = 138.0;
 
-    _planetParticles = [];
+    List<StarParticle> planetParticles = [];
     _backgroundParticles = [];
 
     for (int index = 0; index < totalStars; index++) {
@@ -250,7 +227,6 @@ class _PortfolioScreenState extends State<PortfolioScreen>
       double? planetRadius;
       double? planetAngle;
       Color pColor = const Color(0xFF7EFFF5);
-      Color pLightColor = const Color(0xFF000000);
       double pSize = r.nextDouble() * 3.0 + 0.5;
 
       if (isPlanet) {
@@ -260,10 +236,9 @@ class _PortfolioScreenState extends State<PortfolioScreen>
           planetAngle = r.nextDouble() * pi * 2;
 
           pColor = const Color(0xFFFFE4B5);
-          pLightColor = const Color(0xFF334155);
-          pSize = r.nextDouble() * 2.5 + 2.2; // Tamaño óptimo para definir las puntas de estrella
+          pSize = r.nextDouble() * 2.5 + 1.5;
         } else {
-          // ANILLOS DE SATURNO (600 partículas) - Color Intensificado pero fino y elegante
+          // ANILLOS DE SATURNO (600 partículas)
           bool isInnerRing = index < 600;
           double ringInner = isInnerRing ? 187.5 : 240.0;
           double ringOuter = isInnerRing ? 240.0 : 300.0;
@@ -271,10 +246,9 @@ class _PortfolioScreenState extends State<PortfolioScreen>
           planetRadius = ringInner + r.nextDouble() * (ringOuter - ringInner);
           planetAngle = r.nextDouble() * pi * 2;
 
-          // Dorado solar y ámbar cálido intensificado
-          pColor = isInnerRing ? const Color(0xFFFFD54F) : const Color(0xFFFFB74D);
-          pLightColor = isInnerRing ? const Color(0xFFB45309) : const Color(0xFF9A3412);
-          pSize = r.nextDouble() * 1.0 + 0.5; // Polvo estelar fino sin apelmazar
+          pColor =
+              isInnerRing ? const Color(0xFFFFF8DC) : const Color(0xFFEBC79E);
+          pSize = r.nextDouble() * 1.0 + 0.5;
         }
       }
 
@@ -282,7 +256,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
         origin: origin,
         size: pSize,
         baseOpacity: r.nextDouble() * 0.6 + 0.4,
-        starType: r.nextInt(3), // Variedad de formas: ★ ✦ ✧
+        starType: isPlanet ? 0 : r.nextInt(3),
         rotationAngle: r.nextDouble() * pi,
         twinkleOffset: r.nextDouble() * pi * 2,
         glowColor: pColor,
@@ -295,17 +269,16 @@ class _PortfolioScreenState extends State<PortfolioScreen>
         planetRadius: planetRadius,
         planetAngle: planetAngle,
         particleColor: pColor,
-        lightParticleColor: pLightColor,
       );
 
       if (isPlanet) {
-        _planetParticles.add(particle);
+        planetParticles.add(particle);
       } else {
         _backgroundParticles.add(particle);
       }
     }
 
-    _bakePlanetLayers(_planetParticles, isDark: isDark);
+    _bakePlanetLayers(planetParticles);
   }
 
   @override
@@ -323,12 +296,11 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Fondo cósmico animado
+          // 1. Fondo cósmico animado (solo estrellas de fondo, ligero para la CPU)
           Positioned.fill(
             child: RepaintBoundary(
               child: AnimatedBuilder(
@@ -339,7 +311,6 @@ class _PortfolioScreenState extends State<PortfolioScreen>
                       particles: _backgroundParticles,
                       timeSeconds: _timeSeconds,
                       screenSize: size,
-                      isDark: isDark,
                     ),
                   );
                 },
@@ -402,7 +373,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
               ),
             ),
 
-          // 3. Contenido scrolleable
+          // 2. Contenido scrolleable
           SingleChildScrollView(
             controller: _scrollController,
             child: Center(
@@ -414,7 +385,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
                   padding: const EdgeInsets.only(
                     left: 44.0,
                     right: 24.0,
-                  ),
+                  ), // +20px a la derecha
                   child: Column(
                     children: [
                       HeroSection(
@@ -437,7 +408,8 @@ class _PortfolioScreenState extends State<PortfolioScreen>
             ),
           ),
 
-          // 4. Índice Lateral (Side Navigation)
+          // 3. Índice Lateral (Side Navigation)
+          // 3. Índice Lateral (Side Navigation) - Restaurado a la izquierda con más margen
           if (size.width > 1000)
             ValueListenableBuilder<String>(
               valueListenable: _activeSectionNotifier,
@@ -460,7 +432,6 @@ class _PortfolioScreenState extends State<PortfolioScreen>
                           child: _RotatingStarsIndicator(
                             animation: _tickerController,
                             activeSection: activeSection,
-                            isDark: isDark,
                           ),
                         ),
 
@@ -468,26 +439,19 @@ class _PortfolioScreenState extends State<PortfolioScreen>
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            _buildNavItem("Inicio", _heroKey, activeSection, isDark),
-                            _buildNavItem("Sobre Mí", _aboutKey, activeSection, isDark),
-                            _buildNavItem("Skills", _techKey, activeSection, isDark),
-                            _buildNavItem("Proyectos", _projectsKey, activeSection, isDark),
-                            _buildNavItem("Contacto", _contactKey, activeSection, isDark),
+                            _buildNavItem("Inicio", _heroKey, activeSection),
+                            _buildNavItem("Sobre Mí", _aboutKey, activeSection),
+                            _buildNavItem("Skills", _techKey, activeSection),
+                            _buildNavItem("Proyectos", _projectsKey, activeSection),
+                            _buildNavItem("Contacto", _contactKey, activeSection),
                           ],
                         ),
                       ],
                     ),
                   ),
                 );
-              },
+              }
             ),
-
-          // 5. Botón Flotante para alternar entre Modo Claro y Oscuro
-          Positioned(
-            top: 24,
-            right: 28,
-            child: _ThemeToggleButton(isDark: isDark),
-          ),
         ],
       ),
     );
@@ -499,13 +463,11 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     return index >= 0 ? index : 0;
   }
 
-  Widget _buildNavItem(String label, GlobalKey key, String activeSection, bool isDark) {
+  Widget _buildNavItem(String label, GlobalKey key, String activeSection) {
     final isActive = activeSection == label;
-    final activeColor = isDark ? Colors.white : AppColors.textPrimaryLight;
-    final inactiveColor = isDark ? Colors.white38 : AppColors.textSecondaryLight.withValues(alpha: 0.6);
 
     return Container(
-      width: 140.0,
+      width: 140.0, // Ancho fijo para centrado perfecto
       height: 56.0,
       alignment: Alignment.center,
       child: TextButton(
@@ -518,7 +480,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
         child: Text(
           label.toUpperCase(),
           style: TextStyle(
-            color: isActive ? activeColor : inactiveColor,
+            color: isActive ? Colors.white : Colors.white38,
             fontSize: 11,
             letterSpacing: 1.5,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
@@ -532,8 +494,8 @@ class _PortfolioScreenState extends State<PortfolioScreen>
 class _RotatingStarsIndicator extends StatelessWidget {
   final Animation<double> animation;
   final String activeSection;
-  final bool isDark;
 
+  // Radios de órbita individuales para cada sección
   static const Map<String, double> _radiiX = {
     "Inicio": 35.0,
     "Sobre Mí": 45.0,
@@ -553,7 +515,6 @@ class _RotatingStarsIndicator extends StatelessWidget {
   const _RotatingStarsIndicator({
     required this.animation,
     required this.activeSection,
-    this.isDark = true,
   });
 
   @override
@@ -561,8 +522,13 @@ class _RotatingStarsIndicator extends StatelessWidget {
     return AnimatedBuilder(
       animation: animation,
       builder: (context, _) {
-        final time = (context.findAncestorStateOfType<_PortfolioScreenState>()?._timeSeconds) ?? 0.0;
-        return SizedBox(
+        // Obtenemos el tiempo acumulativo del estado padre para evitar saltos
+        final time =
+            (context
+                .findAncestorStateOfType<_PortfolioScreenState>()
+                ?._timeSeconds) ??
+            0.0;
+        return Container(
           width: 120,
           height: 40,
           child: Stack(
@@ -579,7 +545,6 @@ class _RotatingStarsIndicator extends StatelessWidget {
 
   Widget _buildStar(double startAngle, double time, double radiusX, double radiusY) {
     final angle = startAngle + time * 2.5;
-    final starColor = isDark ? const Color(0xFF7EFFF5) : const Color(0xFF0284C7);
 
     return Transform.translate(
       offset: Offset(cos(angle) * radiusX, sin(angle) * radiusY),
@@ -587,106 +552,15 @@ class _RotatingStarsIndicator extends StatelessWidget {
         width: 4,
         height: 4,
         decoration: BoxDecoration(
-          color: starColor,
+          color: const Color(0xFF7EFFF5),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: starColor.withValues(alpha: 0.5),
+              color: const Color(0xFF7EFFF5).withOpacity(0.5),
               blurRadius: 4,
               spreadRadius: 1,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ThemeToggleButton extends StatefulWidget {
-  final bool isDark;
-
-  const _ThemeToggleButton({required this.isDark});
-
-  @override
-  State<_ThemeToggleButton> createState() => _ThemeToggleButtonState();
-}
-
-class _ThemeToggleButtonState extends State<_ThemeToggleButton> {
-  bool isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = widget.isDark;
-    final accent = context.accentPrimary;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => isHovered = true),
-      onExit: (_) => setState(() => isHovered = false),
-      child: Tooltip(
-        message: isDark ? "Activar Modo Claro" : "Activar Modo Oscuro",
-        child: GestureDetector(
-          onTap: () {
-            PortfolioApp.themeNotifier.value =
-                isDark ? ThemeMode.light : ThemeMode.dark;
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? (isHovered
-                      ? accent.withValues(alpha: 0.18)
-                      : Colors.white.withValues(alpha: 0.06))
-                  : (isHovered
-                      ? accent.withValues(alpha: 0.15)
-                      : Colors.white.withValues(alpha: 0.85)),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: isHovered
-                    ? accent.withValues(alpha: 0.6)
-                    : (isDark
-                        ? Colors.white.withValues(alpha: 0.15)
-                        : const Color(0xFF0F172A).withValues(alpha: 0.12)),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isHovered
-                      ? accent.withValues(alpha: isDark ? 0.3 : 0.2)
-                      : (isDark ? Colors.black26 : const Color(0xFF0F172A).withValues(alpha: 0.06)),
-                  blurRadius: isHovered ? 16 : 8,
-                  spreadRadius: isHovered ? 2 : 0,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedRotation(
-                  turns: isDark ? 0 : 0.5,
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeOutBack,
-                  child: Icon(
-                    isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                    size: 18,
-                    color: accent,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  isDark ? "CLARO" : "OSCURO",
-                  style: TextStyle(
-                    fontFamily: 'FiraCode',
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                    color: isDark ? Colors.white : AppColors.textPrimaryLight,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

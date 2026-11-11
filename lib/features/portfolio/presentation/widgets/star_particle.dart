@@ -24,8 +24,7 @@ class StarParticle {
   double? planetRadius;       // Radio respecto al centro del planeta
   double? planetAngle;        // Ángulo inicial (para rotación orbital)
   final bool hasGlow;
-  final Color particleColor;      // Color específico para Dark Mode
-  final Color lightParticleColor; // Color específico para Light Mode
+  final Color particleColor;  // Color específico asignado en la creación
 
   // Para efectos de rastro (opcional)
   Offset? lastPosition;
@@ -47,12 +46,11 @@ class StarParticle {
     required this.brownianAngle,
     required this.hasGlow,
     required this.particleColor,
-    Color? lightParticleColor,
     this.isPlanet = false,
     this.isRing = false,
     this.planetRadius,
     this.planetAngle,
-  }) : lightParticleColor = lightParticleColor ?? const Color(0xFF0284C7) {
+  }) {
     position = origin;
     lastPosition = origin;
   }
