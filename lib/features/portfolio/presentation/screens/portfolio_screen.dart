@@ -167,7 +167,16 @@ class _PortfolioScreenState extends State<PortfolioScreen>
       canvas.drawCircle(pos, p.size * 1.2, glowPaint);
     }
 
-    final Color coreColor = isDark ? AppColors.starCore : const Color(0xFF000000);
+    final Color coreColor;
+    if (p.isRing) {
+      coreColor = isDark
+          ? p.particleColor
+          : (p.particleColor == const Color(0xFFFFD54F)
+              ? const Color(0xFFD97706)
+              : const Color(0xFFB45309));
+    } else {
+      coreColor = isDark ? AppColors.starCore : const Color(0xFF000000);
+    }
     paint.color = coreColor.withOpacity(p.baseOpacity);
     
     if (p.size > 3.0) {
@@ -257,7 +266,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
           planetAngle = r.nextDouble() * pi * 2;
 
           pColor =
-              isInnerRing ? const Color(0xFFFFF8DC) : const Color(0xFFEBC79E);
+              isInnerRing ? const Color(0xFFFFD54F) : const Color(0xFFFFB74D);
           pSize = r.nextDouble() * 1.0 + 0.5;
         }
       }
@@ -265,7 +274,9 @@ class _PortfolioScreenState extends State<PortfolioScreen>
       final particle = StarParticle(
         origin: origin,
         size: pSize,
-        baseOpacity: r.nextDouble() * 0.6 + 0.4,
+        baseOpacity: isRing
+            ? (r.nextDouble() * 0.4 + 0.6)
+            : (r.nextDouble() * 0.6 + 0.4),
         starType: isPlanet ? 0 : r.nextInt(3),
         rotationAngle: r.nextDouble() * pi,
         twinkleOffset: r.nextDouble() * pi * 2,
