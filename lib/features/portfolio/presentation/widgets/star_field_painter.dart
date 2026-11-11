@@ -48,7 +48,7 @@ class StarFieldPainter extends CustomPainter {
     final Color starColor = isDark ? AppColors.starCore : const Color(0xFF000000);
 
     // Resplandor / Glow con blur para estrellas grandes
-    if (particle.hasGlow && particle.size > 3.0) {
+    if (particle.hasGlow && particle.size > 2.5) {
       final glowPaint = Paint()
         ..style = PaintingStyle.fill
         ..color = glowColor.withOpacity(currentOpacity * 0.3)
@@ -58,13 +58,13 @@ class StarFieldPainter extends CustomPainter {
 
     paint.color = starColor.withOpacity(0.8 * currentOpacity);
 
-    // Formas complejas de estrella (★ ✦ ✧) para estrellas grandes (> 3.0px)
-    if (particle.size > 3.0) {
+    // Formas de estrella (★ ✦ ✧)
+    if (particle.size > 2.0) {
       canvas.save();
       canvas.translate(particle.position.dx, particle.position.dy);
       canvas.rotate(particle.rotationAngle);
 
-      Path starPath = _getStarPath(particle.starType, particle.size);
+      Path starPath = _getStarPath(particle.starType, particle.size * 1.3);
       canvas.drawPath(starPath, paint);
       canvas.restore();
     } else {
@@ -82,13 +82,13 @@ class StarFieldPainter extends CustomPainter {
     Path path;
     switch (type) {
       case 0:
-        path = _createStarPath(5, size, size * 0.4);
+        path = _createStarPath(5, size, size * 0.38);
         break;
       case 1:
-        path = _createStarPath(4, size * 1.2, size * 0.2);
+        path = _createStarPath(4, size * 1.25, size * 0.22);
         break;
       default:
-        path = _createStarPath(8, size * 0.9, size * 0.5);
+        path = _createStarPath(8, size * 1.0, size * 0.45);
         break;
     }
     _starPathCache[cacheKey] = path;

@@ -125,7 +125,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   }
 
   void _bakePlanetLayers(List<StarParticle> planetParticles, {required bool isDark}) {
-    // 1. Hornear el CUERPO de Saturno con máxima fidelidad
+    // 1. Hornear el CUERPO de Saturno con máxima fidelidad en forma de ESTRELLAS (★ ✦ ✧)
     final bodyRecorder = ui.PictureRecorder();
     final bodyCanvas = Canvas(bodyRecorder);
     final paint = Paint()..style = PaintingStyle.fill;
@@ -137,7 +137,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     }
     _planetBodyPicture = bodyRecorder.endRecording();
 
-    // 2. Hornear los ANILLOS de Saturno con máxima fidelidad y color intensificado
+    // 2. Hornear los ANILLOS de Saturno como polvo estelar fino con color intensificado
     final ringsRecorder = ui.PictureRecorder();
     final ringsCanvas = Canvas(ringsRecorder);
 
@@ -152,42 +152,40 @@ class _PortfolioScreenState extends State<PortfolioScreen>
 
   void _drawFidelityParticle(Canvas canvas, StarParticle p, Paint paint, {required bool isDark}) {
     if (p.planetRadius == null || p.planetAngle == null) return;
-    if (p.baseOpacity < 0.1) return; // Saltar estrellas casi invisibles en el bake
+    if (p.baseOpacity < 0.1) return;
     
     final pos = Offset(
       p.planetRadius! * cos(p.planetAngle!),
       p.planetRadius! * sin(p.planetAngle!),
     );
 
-    final glowColor = isDark ? p.particleColor : p.lightParticleColor;
+    final glowColor = isDark ? p.particleColor : const Color(0xFF000000);
     final coreColor = isDark ? AppColors.starCore : const Color(0xFF000000);
 
-    // Glow ultra-optimizado para el bake
+    // Glow ultra-optimizado para el cuerpo de Saturno
     if (p.hasGlow && p.size > 2.0) {
       final glowPaint = Paint()
         ..style = PaintingStyle.fill
-        ..color = glowColor.withOpacity(p.baseOpacity * (p.isRing ? 0.45 : 0.3))
+        ..color = glowColor.withOpacity(p.baseOpacity * 0.35)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
-      canvas.drawCircle(pos, p.size * (p.isRing ? 1.4 : 1.2), glowPaint);
+      canvas.drawCircle(pos, p.size * 1.2, glowPaint);
     }
 
-    // Para el anillo: color intensificado. Para el cuerpo: núcleo estelar intacto
     if (p.isRing) {
-      paint.color = glowColor.withOpacity(p.baseOpacity);
+      // ANILLOS: Polvo estelar fino con color dorado/ámbar cálido intensificado
+      paint.color = (isDark ? p.particleColor : p.lightParticleColor).withOpacity(p.baseOpacity);
+      canvas.drawCircle(pos, p.size * 0.5, paint);
     } else {
+      // CUERPO: SIEMPRE DIBUJAR COMO ESTRELLA VISIBLE (★ ✦ ✧)
       paint.color = coreColor.withOpacity(p.baseOpacity);
-    }
-    
-    if (p.size > 3.0) {
+      
       canvas.save();
       canvas.translate(pos.dx, pos.dy);
       canvas.rotate(p.rotationAngle);
       
-      Path starPath = _getStarPath(p.starType, p.size);
+      Path starPath = _getStarPath(p.starType, p.size * 1.35);
       canvas.drawPath(starPath, paint);
       canvas.restore();
-    } else {
-      canvas.drawCircle(pos, p.size * 0.5, paint);
     }
   }
 
@@ -198,11 +196,18 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     int cacheKey = type * 1000 + (size * 10).toInt();
     if (_bakePathCache.containsKey(cacheKey)) return _bakePathCache[cacheKey]!;
     
-    Path path = _createStarPath(
-      type == 0 ? 5 : (type == 1 ? 4 : 8),
-      type == 1 ? size * 1.2 : (type == 0 ? size : size * 0.9),
-      type == 1 ? size * 0.2 : (type == 0 ? size : size * 0.5),
-    );
+    Path path;
+    switch (type) {
+      case 0:
+        path = _createStarPath(5, size, size * 0.38); // 5 puntas nítidas
+        break;
+      case 1:
+        path = _createStarPath(4, size * 1.25, size * 0.22); // 4 puntas centelleo
+        break;
+      default:
+        path = _createStarPath(8, size * 1.0, size * 0.45); // 8 puntas cruz estelar
+        break;
+    }
     _bakePathCache[cacheKey] = path;
     return path;
   }
@@ -256,9 +261,9 @@ class _PortfolioScreenState extends State<PortfolioScreen>
 
           pColor = const Color(0xFFFFE4B5);
           pLightColor = const Color(0xFF334155);
-          pSize = r.nextDouble() * 2.5 + 1.5;
+          pSize = r.nextDouble() * 2.5 + 2.2; // Tamaño óptimo para definir las puntas de estrella
         } else {
-          // ANILLOS DE SATURNO (600 partículas) - Color Intensificado
+          // ANILLOS DE SATURNO (600 partículas) - Color Intensificado pero fino y elegante
           bool isInnerRing = index < 600;
           double ringInner = isInnerRing ? 187.5 : 240.0;
           double ringOuter = isInnerRing ? 240.0 : 300.0;
@@ -266,22 +271,18 @@ class _PortfolioScreenState extends State<PortfolioScreen>
           planetRadius = ringInner + r.nextDouble() * (ringOuter - ringInner);
           planetAngle = r.nextDouble() * pi * 2;
 
-          // Tonos dorados y ámbar vibrantes e intensos
-          pColor = isInnerRing 
-              ? const Color(0xFFFFC529) // Dorado brillante intenso
-              : const Color(0xFFFF9100); // Ámbar cósmico vivo
-          pLightColor = isInnerRing 
-              ? const Color(0xFFB45309) // Ámbar profundo en modo claro
-              : const Color(0xFFC2410C); // Cobre intenso en modo claro
-          pSize = r.nextDouble() * 1.3 + 0.7;
+          // Dorado solar y ámbar cálido intensificado
+          pColor = isInnerRing ? const Color(0xFFFFD54F) : const Color(0xFFFFB74D);
+          pLightColor = isInnerRing ? const Color(0xFFB45309) : const Color(0xFF9A3412);
+          pSize = r.nextDouble() * 1.0 + 0.5; // Polvo estelar fino sin apelmazar
         }
       }
 
       final particle = StarParticle(
         origin: origin,
         size: pSize,
-        baseOpacity: isRing ? (r.nextDouble() * 0.4 + 0.6) : (r.nextDouble() * 0.6 + 0.4),
-        starType: isPlanet ? 0 : r.nextInt(3),
+        baseOpacity: r.nextDouble() * 0.6 + 0.4,
+        starType: r.nextInt(3), // Variedad de formas: ★ ✦ ✧
         rotationAngle: r.nextDouble() * pi,
         twinkleOffset: r.nextDouble() * pi * 2,
         glowColor: pColor,
@@ -290,7 +291,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
         brownianAngle: r.nextDouble() * pi * 2,
         isPlanet: isPlanet,
         isRing: isRing,
-        hasGlow: (!isRing && r.nextDouble() < 0.65) || (isRing && r.nextDouble() < 0.35),
+        hasGlow: !isRing && r.nextDouble() < 0.65,
         planetRadius: planetRadius,
         planetAngle: planetAngle,
         particleColor: pColor,
@@ -327,7 +328,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Fondo cósmico animado (solo estrellas de fondo, ligero para la CPU)
+          // 1. Fondo cósmico animado
           Positioned.fill(
             child: RepaintBoundary(
               child: AnimatedBuilder(
