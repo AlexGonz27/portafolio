@@ -5,7 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import 'star_particle.dart';
 
 /// Pintor para las estrellas titilantes y flotantes de fondo.
-/// Solo itera sobre las estrellas del cosmos profundo, adaptándose a Dark y Light mode.
+/// Solo itera sobre las estrellas del cosmos profundo, sin sobrecargar la CPU con Saturno.
 class StarFieldPainter extends CustomPainter {
   final List<StarParticle> particles;
   final double timeSeconds;
@@ -44,19 +44,19 @@ class StarFieldPainter extends CustomPainter {
     double currentOpacity = particle.currentOpacity(timeSeconds);
     if (currentOpacity < 0.1) return;
 
-    final starCoreColor = isDark ? AppColors.starCore : AppColors.starCoreLight;
-    final glowColor = isDark ? particle.particleColor : particle.lightParticleColor;
+    final Color glowColor = isDark ? particle.particleColor : const Color(0xFF000000);
+    final Color starColor = isDark ? AppColors.starCore : const Color(0xFF000000);
 
     // Resplandor / Glow con blur para estrellas grandes
     if (particle.hasGlow && particle.size > 3.0) {
       final glowPaint = Paint()
         ..style = PaintingStyle.fill
-        ..color = glowColor.withValues(alpha: currentOpacity * (isDark ? 0.3 : 0.25))
+        ..color = glowColor.withOpacity(currentOpacity * 0.3)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
       canvas.drawCircle(particle.position, particle.size * 1.2, glowPaint);
     }
 
-    paint.color = starCoreColor.withValues(alpha: (isDark ? 0.8 : 0.75) * currentOpacity);
+    paint.color = starColor.withOpacity(0.8 * currentOpacity);
 
     // Formas complejas de estrella (★ ✦ ✧) para estrellas grandes (> 3.0px)
     if (particle.size > 3.0) {
@@ -123,6 +123,8 @@ class StarFieldPainter extends CustomPainter {
 
 /// Pintor ultra-eficiente para Saturno:
 /// Se dibuja exactamente UNA VEZ en su propio RepaintBoundary.
+/// Toda la rotación de Saturno es ejecutada directamente por el compositor de la GPU
+/// (sin repintar canvas ni calcular matemáticas en CPU).
 class SaturnPicturePainter extends CustomPainter {
   final Picture? picture;
 

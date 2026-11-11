@@ -137,7 +137,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     }
     _planetBodyPicture = bodyRecorder.endRecording();
 
-    // 2. Hornear los ANILLOS de Saturno con máxima fidelidad
+    // 2. Hornear los ANILLOS de Saturno con máxima fidelidad y color intensificado
     final ringsRecorder = ui.PictureRecorder();
     final ringsCanvas = Canvas(ringsRecorder);
 
@@ -152,26 +152,31 @@ class _PortfolioScreenState extends State<PortfolioScreen>
 
   void _drawFidelityParticle(Canvas canvas, StarParticle p, Paint paint, {required bool isDark}) {
     if (p.planetRadius == null || p.planetAngle == null) return;
-    if (p.baseOpacity < 0.1) return;
+    if (p.baseOpacity < 0.1) return; // Saltar estrellas casi invisibles en el bake
     
     final pos = Offset(
       p.planetRadius! * cos(p.planetAngle!),
       p.planetRadius! * sin(p.planetAngle!),
     );
 
-    final starGlowColor = isDark ? p.particleColor : p.lightParticleColor;
-    final starCoreColor = isDark ? AppColors.starCore : AppColors.starCoreLight;
+    final glowColor = isDark ? p.particleColor : p.lightParticleColor;
+    final coreColor = isDark ? AppColors.starCore : const Color(0xFF000000);
 
     // Glow ultra-optimizado para el bake
-    if (p.hasGlow && p.size > 3.0) {
+    if (p.hasGlow && p.size > 2.0) {
       final glowPaint = Paint()
         ..style = PaintingStyle.fill
-        ..color = starGlowColor.withValues(alpha: p.baseOpacity * (isDark ? 0.3 : 0.2))
+        ..color = glowColor.withOpacity(p.baseOpacity * (p.isRing ? 0.45 : 0.3))
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
-      canvas.drawCircle(pos, p.size * 1.2, glowPaint);
+      canvas.drawCircle(pos, p.size * (p.isRing ? 1.4 : 1.2), glowPaint);
     }
 
-    paint.color = (p.isPlanet && !isDark ? starGlowColor : starCoreColor).withValues(alpha: p.baseOpacity);
+    // Para el anillo: color intensificado. Para el cuerpo: núcleo estelar intacto
+    if (p.isRing) {
+      paint.color = glowColor.withOpacity(p.baseOpacity);
+    } else {
+      paint.color = coreColor.withOpacity(p.baseOpacity);
+    }
     
     if (p.size > 3.0) {
       canvas.save();
@@ -210,11 +215,8 @@ class _PortfolioScreenState extends State<PortfolioScreen>
       double theta = i * step - pi / 2;
       double x = r * cos(theta);
       double y = r * sin(theta);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
+      if (i == 0) path.moveTo(x, y);
+      else path.lineTo(x, y);
     }
     path.close();
     return path;
@@ -243,7 +245,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
       double? planetRadius;
       double? planetAngle;
       Color pColor = const Color(0xFF7EFFF5);
-      Color pLightColor = const Color(0xFF0284C7);
+      Color pLightColor = const Color(0xFF000000);
       double pSize = r.nextDouble() * 3.0 + 0.5;
 
       if (isPlanet) {
@@ -253,10 +255,10 @@ class _PortfolioScreenState extends State<PortfolioScreen>
           planetAngle = r.nextDouble() * pi * 2;
 
           pColor = const Color(0xFFFFE4B5);
-          pLightColor = const Color(0xFF334155); // Grafito pizarra para modo claro
+          pLightColor = const Color(0xFF334155);
           pSize = r.nextDouble() * 2.5 + 1.5;
         } else {
-          // ANILLOS DE SATURNO (600 partículas)
+          // ANILLOS DE SATURNO (600 partículas) - Color Intensificado
           bool isInnerRing = index < 600;
           double ringInner = isInnerRing ? 187.5 : 240.0;
           double ringOuter = isInnerRing ? 240.0 : 300.0;
@@ -264,16 +266,21 @@ class _PortfolioScreenState extends State<PortfolioScreen>
           planetRadius = ringInner + r.nextDouble() * (ringOuter - ringInner);
           planetAngle = r.nextDouble() * pi * 2;
 
-          pColor = isInnerRing ? const Color(0xFFFFF8DC) : const Color(0xFFEBC79E);
-          pLightColor = isInnerRing ? const Color(0xFF475569) : const Color(0xFF64748B);
-          pSize = r.nextDouble() * 1.0 + 0.5;
+          // Tonos dorados y ámbar vibrantes e intensos
+          pColor = isInnerRing 
+              ? const Color(0xFFFFC529) // Dorado brillante intenso
+              : const Color(0xFFFF9100); // Ámbar cósmico vivo
+          pLightColor = isInnerRing 
+              ? const Color(0xFFB45309) // Ámbar profundo en modo claro
+              : const Color(0xFFC2410C); // Cobre intenso en modo claro
+          pSize = r.nextDouble() * 1.3 + 0.7;
         }
       }
 
       final particle = StarParticle(
         origin: origin,
         size: pSize,
-        baseOpacity: r.nextDouble() * 0.6 + 0.4,
+        baseOpacity: isRing ? (r.nextDouble() * 0.4 + 0.6) : (r.nextDouble() * 0.6 + 0.4),
         starType: isPlanet ? 0 : r.nextInt(3),
         rotationAngle: r.nextDouble() * pi,
         twinkleOffset: r.nextDouble() * pi * 2,
@@ -283,7 +290,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
         brownianAngle: r.nextDouble() * pi * 2,
         isPlanet: isPlanet,
         isRing: isRing,
-        hasGlow: !isRing && r.nextDouble() < 0.65,
+        hasGlow: (!isRing && r.nextDouble() < 0.65) || (isRing && r.nextDouble() < 0.35),
         planetRadius: planetRadius,
         planetAngle: planetAngle,
         particleColor: pColor,
@@ -320,7 +327,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Fondo cósmico animado (estrellas invertidas a negro/tinta en Modo Claro)
+          // 1. Fondo cósmico animado (solo estrellas de fondo, ligero para la CPU)
           Positioned.fill(
             child: RepaintBoundary(
               child: AnimatedBuilder(
@@ -474,7 +481,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
               },
             ),
 
-          // 5. Botón Flotante para cambiar entre Modo Claro y Oscuro
+          // 5. Botón Flotante para alternar entre Modo Claro y Oscuro
           Positioned(
             top: 24,
             right: 28,
