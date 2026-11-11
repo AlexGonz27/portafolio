@@ -55,27 +55,57 @@ class AboutSection extends StatelessWidget {
                   if (!isMobile) const SizedBox(width: 60),
                   if (isMobile) const SizedBox(height: 40),
                   
-                  // Avatar decorativo abstracto (Silueta cósmica estilizada)
+                  // Avatar / Foto con marco cósmico y resplandor
                   Expanded(
                     flex: isMobile ? 0 : 2,
                     child: Center(
                       child: Container(
-                        width: isMobile ? 200 : 250,
-                        height: isMobile ? 200 : 250,
+                        width: isMobile ? 220 : 270,
+                        height: isMobile ? 220 : 270,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.accentPrimary.withOpacity(0.5), width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.accentPrimary.withOpacity(0.15),
-                              blurRadius: 50,
-                              spreadRadius: 10,
-                            )
-                          ]
+                              color: AppColors.accentPrimary.withOpacity(0.25),
+                              blurRadius: 35,
+                              spreadRadius: 5,
+                            ),
+                            BoxShadow(
+                              color: AppColors.accentSecondary.withOpacity(0.18),
+                              blurRadius: 55,
+                              spreadRadius: 8,
+                            ),
+                          ],
+                          gradient: const SweepGradient(
+                            colors: [
+                              AppColors.accentPrimary,
+                              AppColors.accentSecondary,
+                              Color(0xFF00B4D8),
+                              AppColors.accentPrimary,
+                            ],
+                          ),
                         ),
-                        child: Center(
-                          // Placeholder para la imagen del usuario o un logo abstracto
-                          child: Icon(Icons.person_outline, size: 80, color: AppColors.accentPrimary.withOpacity(0.8)),
+                        padding: const EdgeInsets.all(3.5),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.background,
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/images/profile.jpg',
+                              fit: BoxFit.cover,
+                              alignment: const Alignment(0.0, -0.1),
+                              errorBuilder: (context, error, stackTrace) => Center(
+                                child: Icon(
+                                  Icons.person_outline,
+                                  size: 80,
+                                  color: AppColors.accentPrimary.withOpacity(0.8),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
