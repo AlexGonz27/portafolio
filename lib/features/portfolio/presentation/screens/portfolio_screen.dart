@@ -265,7 +265,7 @@ class _PortfolioScreenState extends State<PortfolioScreen>
         origin: origin,
         size: pSize,
         baseOpacity: isRing
-            ? (r.nextDouble() * 0.35 + 0.35)
+            ? (r.nextDouble() * 0.15 + 0.85)
             : (r.nextDouble() * 0.6 + 0.4),
         starType: isPlanet ? 0 : r.nextInt(3),
         rotationAngle: r.nextDouble() * pi,
