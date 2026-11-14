@@ -23,12 +23,17 @@ class _PortfolioScreenState extends State<PortfolioScreen>
   final ScrollController _scrollController = ScrollController();
   late AnimationController _tickerController;
 
-  List<StarParticle> _backgroundParticles = [];
+  List<StarParticle> _staticBackgroundParticles = [];
+  List<StarParticle> _dynamicBackgroundParticles = [];
   List<StarParticle> _planetParticles = [];
   ui.Picture? _planetBodyPicture;
   ui.Picture? _planetRingsPicture;
+  ui.Picture? _staticBackgroundPicture;
+  ui.Image? _starAtlasImage;
   double _timeSeconds = 0.0;
   bool? _lastBakeIsDark;
+  final ValueNotifier<double> _dynamicStarsTime = ValueNotifier<double>(0.0);
+  double _lastDynamicTick = 0.0;
 
   final GlobalKey _heroKey = GlobalKey();
   final GlobalKey _aboutKey = GlobalKey();
@@ -90,9 +95,23 @@ class _PortfolioScreenState extends State<PortfolioScreen>
 
     _tickerController.addListener(() {
       _timeSeconds += 0.016;
+      // Throttling del fondo dinámico a 30 FPS para ahorrar CPU
+      if (_timeSeconds - _lastDynamicTick >= 0.033) {
+        _lastDynamicTick = _timeSeconds;
+        _dynamicStarsTime.value = _timeSeconds;
+      }
     });
 
     _scrollController.addListener(_onScroll);
+
+    // Cargar atlas de sprites GPU para drawRawAtlas
+    StarAtlasHelper.getAtlas().then((img) {
+      if (mounted) {
+        setState(() {
+          _starAtlasImage = img;
+        });
+      }
+    });
   }
 
   @override
@@ -113,13 +132,47 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     super.didChangeDependencies();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    if (_backgroundParticles.isEmpty) {
+    if (_staticBackgroundParticles.isEmpty && _dynamicBackgroundParticles.isEmpty) {
       _initCosmicScene(MediaQuery.of(context).size);
       _lastBakeIsDark = isDark;
     } else if (_lastBakeIsDark != isDark) {
       _bakePlanetLayers(_planetParticles, isDark: isDark);
+      _bakeStaticBackground(_staticBackgroundParticles, isDark: isDark);
       _lastBakeIsDark = isDark;
     }
+  }
+
+  void _bakeStaticBackground(List<StarParticle> staticStars, {required bool isDark}) {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final paint = Paint()..style = PaintingStyle.fill;
+    final coreColor = isDark ? AppColors.starCore : const Color(0xFF000000);
+
+    for (var p in staticStars) {
+      if (p.hasGlow && p.size > 3.0) {
+        final glowPaint = Paint()
+          ..style = PaintingStyle.fill
+          ..color = (isDark ? p.particleColor : const Color(0xFF000000)).withOpacity(p.baseOpacity * 0.3)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
+        canvas.drawCircle(p.origin, p.size * 1.2, glowPaint);
+      }
+
+      paint.color = coreColor.withOpacity(0.8 * p.baseOpacity);
+      if (p.size > 3.0) {
+        canvas.save();
+        canvas.translate(p.origin.dx, p.origin.dy);
+        canvas.rotate(p.rotationAngle);
+        Path starPath = _getStarPath(p.starType, p.size);
+        canvas.drawPath(starPath, paint);
+        canvas.restore();
+      } else {
+        canvas.drawCircle(p.origin, p.size * 0.5, paint);
+      }
+    }
+
+    _staticBackgroundPicture?.dispose();
+    _staticBackgroundPicture = recorder.endRecording();
+    _bakePathCache.clear();
   }
 
   void _bakePlanetLayers(List<StarParticle> planetParticles, {required bool isDark}) {
@@ -222,7 +275,8 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     double bodyRadius = 138.0;
 
     List<StarParticle> planetParticles = [];
-    _backgroundParticles = [];
+    _staticBackgroundParticles = [];
+    _dynamicBackgroundParticles = [];
 
     for (int index = 0; index < totalStars; index++) {
       bool isPlanet = index < planetStarsCount;
@@ -284,13 +338,19 @@ class _PortfolioScreenState extends State<PortfolioScreen>
       if (isPlanet) {
         planetParticles.add(particle);
       } else {
-        _backgroundParticles.add(particle);
+        // 75% estáticas (horneadas en GPU), 25% dinámicas (drawRawAtlas a 30 FPS)
+        if (index % 4 == 0) {
+          _dynamicBackgroundParticles.add(particle);
+        } else {
+          _staticBackgroundParticles.add(particle);
+        }
       }
     }
 
     _planetParticles = planetParticles;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     _bakePlanetLayers(_planetParticles, isDark: isDark);
+    _bakeStaticBackground(_staticBackgroundParticles, isDark: isDark);
   }
 
   @override
@@ -300,8 +360,10 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _activeSectionNotifier.dispose();
+    _dynamicStarsTime.dispose();
     _planetBodyPicture?.dispose();
     _planetRingsPicture?.dispose();
+    _staticBackgroundPicture?.dispose();
     super.dispose();
   }
 
@@ -313,18 +375,29 @@ class _PortfolioScreenState extends State<PortfolioScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Fondo cósmico animado (solo estrellas de fondo, ligero para la CPU)
+          // 1. Capa Estática Horneada de Estrellas de Fondo (Cero cálculo CPU por frame)
+          if (_staticBackgroundPicture != null)
+            Positioned.fill(
+              child: RepaintBoundary(
+                child: CustomPaint(
+                  painter: StaticStarFieldPainter(_staticBackgroundPicture),
+                ),
+              ),
+            ),
+
+          // 2. Capa Dinámica Titilante (drawRawAtlas GPU en 1 draw call, a 30 FPS)
           Positioned.fill(
             child: RepaintBoundary(
-              child: AnimatedBuilder(
-                animation: _tickerController,
-                builder: (context, _) {
+              child: ValueListenableBuilder<double>(
+                valueListenable: _dynamicStarsTime,
+                builder: (context, time, _) {
                   return CustomPaint(
-                    painter: StarFieldPainter(
-                      particles: _backgroundParticles,
-                      timeSeconds: _timeSeconds,
+                    painter: DynamicStarFieldPainter(
+                      particles: _dynamicBackgroundParticles,
+                      timeSeconds: time,
                       screenSize: size,
                       isDark: isDark,
+                      atlasImage: _starAtlasImage,
                     ),
                   );
                 },
