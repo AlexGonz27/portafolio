@@ -37,17 +37,76 @@ class AboutSection extends StatelessWidget {
                       children: [
                         RichText(
                           text: TextSpan(
-                            style: Theme.of(context).textTheme.bodyLarge,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              height: 1.6,
+                              color: context.textSecondary,
+                            ),
                             children: [
-                              const TextSpan(text: "Soy un "),
+                              const TextSpan(text: "Soy "),
+                              TextSpan(
+                                text: "Alexander González",
+                                style: TextStyle(
+                                  color: context.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const TextSpan(text: ", un "),
                               TextSpan(
                                 text: "Desarrollador de Software",
-                                style: TextStyle(color: accentPrimary, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: accentPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                              const TextSpan(text: " apasionado por crear soluciones tecnológicas robustas. "),
-                              const TextSpan(text: "Actualmente este espacio se encuentra en construcción, pero aquí detallaré mi trayectoria profesional, mis pasiones enfocadas en el ecosistema backend y arquitecturas eficientes, y mi enfoque para resolver problemas complejos.\n\n"),
-                              
-                              const TextSpan(text: "Me gusta trabajar en la constante evolución tecnológica, abarcando desde desarrollo de APIs rápidas hasta interfaces de usuario fluidas preparadas para escala."),
+                              const TextSpan(
+                                text: " enfocado en crear aplicaciones web, móviles y soluciones backend eficientes y bien estructuradas.\n\n",
+                              ),
+                              const TextSpan(
+                                text: "Trabajo principalmente con el ecosistema ",
+                              ),
+                              TextSpan(
+                                text: "Flutter & Dart",
+                                style: TextStyle(
+                                  color: context.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const TextSpan(
+                                text: " (tanto en interfaces frontend como en backend con ",
+                              ),
+                              TextSpan(
+                                text: "Dart Frog",
+                                style: TextStyle(
+                                  color: accentSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const TextSpan(
+                                text: "), integrando bases de datos como ",
+                              ),
+                              TextSpan(
+                                text: "PostgreSQL",
+                                style: TextStyle(
+                                  color: context.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const TextSpan(
+                                text: " y despliegues con ",
+                              ),
+                              TextSpan(
+                                text: "Docker",
+                                style: TextStyle(
+                                  color: context.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const TextSpan(
+                                text: ".\n\n",
+                              ),
+                              const TextSpan(
+                                text: "Cuento con experiencia llevando soluciones a producción y desarrollando apps offline-first. Me motiva el aprendizaje continuo, las buenas prácticas de arquitectura y construir software confiable que resuelva necesidades reales.",
+                              ),
                             ],
                           ),
                         ),
